@@ -363,6 +363,27 @@ def earnings_soon(ticker):
     return min(soon) if soon else None
 
 
+def option_volume(symbol):
+    """(average daily contracts over the last 5 completed sessions, contracts traded so far today).
+    Days Yahoo reports as 0 are gaps in its data, not real zero days, so they're left out of the average."""
+    for attempt in range(4):
+        try:
+            h = yf.Ticker(symbol).history(period="10d", interval="1d")
+            break
+        except yf.exceptions.YFRateLimitError:
+            time.sleep(5 * 2 ** attempt)
+        except Exception:
+            return None, None
+    else:
+        return None, None
+    if h.empty:
+        return 0, 0
+    today = datetime.now(ET).date()
+    done = h[h.index.date < today]["Volume"]
+    done = done[done > 0].tail(5)
+    return (int(done.mean()) if len(done) else 0), int(h[h.index.date == today]["Volume"].sum())
+
+
 def est_contract_cost(ticker_df, call, dte):
     """Rough ATM weekly cost per contract from realized vol (premarket, before real quotes)."""
     c = ticker_df["Close"]
@@ -554,15 +575,10 @@ def run_trend_scan(dry_run=False, info=None):
     log.info("trend scan: %d aligned names", len(cands))
 
     time.sleep(20)  # let Yahoo's rate limiter cool off after the bulk download
-    picks, skipped, pricey = [], [], []
-    for h in cands:
+    picks, skipped, pricey, thin = [], [], [], []
+    for h in cands[:C.MAX_NAMES_CHECKED]:   # cap the option lookups so the push doesn't go out late
         if len(picks) >= C.WATCHLIST_SIZE:
             break
-        er = earnings_soon(h["ticker"])
-        if er and er != "unknown":
-            skipped.append(f"{h['ticker']} ({er:%b %d})")
-            continue
-        h["earnings_unknown"] = er == "unknown"
         h["contract"], h["target"], ask, h["symbol"] = suggest_contract(h["ticker"], h["direction"], h["price"],
                                                            weekly_dte(today), C.WEEKLY_MIN_DTE)
         if not ask:
@@ -571,19 +587,32 @@ def run_trend_scan(dry_run=False, info=None):
         if not h["qty"]:                    # one contract already breaks the size limit
             pricey.append(h["ticker"])
             continue
+        # enough option trading to get in and out near the quote
+        avg_vol, vol_today = option_volume(h["symbol"]) if h["symbol"] else (None, None)
+        if avg_vol is None or avg_vol < C.MIN_OPTION_AVG_VOLUME or vol_today < C.MIN_OPTION_VOLUME_TODAY:
+            thin.append(h["ticker"] if avg_vol is None else f"{h['ticker']} ({avg_vol:,}/day, {vol_today:,} today)")
+            continue
+        h["opt_avg_vol"], h["opt_vol_today"] = avg_vol, vol_today
+        er = earnings_soon(h["ticker"])
+        if er and er != "unknown":
+            skipped.append(f"{h['ticker']} ({er:%b %d})")
+            continue
+        h["earnings_unknown"] = er == "unknown"
         h["size"] = f"max {h['qty']} contract{'s' if h['qty'] != 1 else ''} (${h['qty'] * ask * 100:,.0f})"
         h["mid"] = round((ask + float(h["contract"].split(" at ")[0].split()[-1].split("/")[0])) / 2, 2)
         picks.append(h)
 
-    info.update(aligned=len(cands), skipped_earnings=skipped, skipped_pricey=pricey,
+    info.update(aligned=len(cands), skipped_earnings=skipped, skipped_pricey=pricey, skipped_thin=thin,
                 picks=[{k: (round(v, 2) if isinstance(v, float) else v) for k, v in h.items()
-                        if k in ("ticker", "direction", "price", "stop", "day_chg", "contract", "target", "qty", "size", "symbol", "mid")}
+                        if k in ("ticker", "direction", "price", "stop", "day_chg", "contract", "target", "qty", "size", "symbol", "mid",
+                                 "opt_avg_vol", "opt_vol_today")}
                        for h in picks])
     lines = []
     for h in picks:
         call = h["direction"] == "CALLS"
         lines.append(f"{'🟢' if call else '🔴'} {h['ticker']} ${h['price']:.2f} ({h['day_chg']:+.1f}% today)\n"
-                     f"   {h['contract']}\n   {h['size']} · skip if {'below' if call else 'above'} ${h['stop']:.2f}"
+                     f"   {h['contract']}\n   option vol {h['opt_avg_vol']:,}/day avg · {h['opt_vol_today']:,} today\n"
+                     f"   {h['size']} · skip if {'below' if call else 'above'} ${h['stop']:.2f}"
                      + ("\n   ⚠️ earnings date unknown, check before trading" if h.get("earnings_unknown") else ""))
     stop = f", or at -{C.STOP_LOSS:.0%}" if C.STOP_LOSS else ""
     rules = (f"Rules: in and out today · sell the option at +{C.TAKE_PROFIT:.0%} or more{stop} · "
@@ -593,6 +622,9 @@ def run_trend_scan(dry_run=False, info=None):
         footer.append("Earnings soon, skipped: " + ", ".join(skipped))
     if pricey:
         footer.append(f"1 contract over ${C.MAX_TRADE_DOLLARS:,}, skipped: " + ", ".join(pricey))
+    if thin:
+        footer.append(f"Options too thin (under {C.MIN_OPTION_AVG_VOLUME:,}/day or {C.MIN_OPTION_VOLUME_TODAY:,} today), "
+                      "skipped: " + ", ".join(thin))
     title = f"Trend watchlist {session:%a %b %d}: {len(picks)} names"
     body = "\n".join(lines + [rules] + footer) if picks else "No names line up with their trend today. Sitting out is a trade too.\n" + vix_text
 

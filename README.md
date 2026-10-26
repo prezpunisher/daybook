@@ -11,6 +11,8 @@ The pattern: trade with the daily trend, weekly options, same day, small size.
   agreed at yesterday's close and that are still on the trend side this morning. Each line has a
   weekly ATM contract and how many contracts fit under `MAX_TRADE_DOLLARS` ($1,000 by default).
   Names reporting earnings within 7 days, and names where one contract costs more than the limit, are skipped.
+  The suggested contract must also average 1,000+ contracts a day over the last 5 sessions and have traded
+  100+ already that morning (`MIN_OPTION_AVG_VOLUME`, `MIN_OPTION_VOLUME_TODAY`), so it's easy to get in and out.
 - **2:25 CT:** a reminder to close every option opened that day, plus a scorecard of the morning's alerts
   (option volume at the alert, and when each option first hit +3%, +5% or −20%). Also on the dashboard.
 

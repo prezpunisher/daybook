@@ -21,6 +21,9 @@ MAX_TRADE_DOLLARS = 1_000         # max cost per trade; the alert sizes contract
 STOP_LOSS = 0.20                  # option stop-loss shown in alerts (e.g. 0.20 = -20%); None = manage it yourself
 EARNINGS_BUFFER_DAYS = 7          # skip names reporting earnings within this many days
 WEEKLY_MIN_DTE = 2                # this Friday's expiry, or next Friday's on Thu/Fri
+MIN_OPTION_AVG_VOLUME = 1_000     # the suggested contract must average this many contracts/day (last 5 sessions)
+MIN_OPTION_VOLUME_TODAY = 100     # ...and have traded this many already today by the morning scan
+MAX_NAMES_CHECKED = 40            # most liquid aligned names to check before giving up on filling the list
 
 # ---------- Legacy RSI strategy (STRATEGY = "rsi") ----------
 # CALL: RSI crosses above 30 (trigger) + price > EMA45 + MACD > signal + Supertrend bullish

@@ -27,6 +27,7 @@ outPct  = input.float(20.0, "Way out %", minval = 0, step = 1, group = grpX)
 grpV = "Display"
 showBg  = input.bool(true, "Shade bars while aligned", group = grpV)
 showTbl = input.bool(true, "Show status panel", group = grpV)
+tblPos  = input.string("Bottom right", "Panel position", options = ["Top right", "Top center", "Top left", "Middle right", "Bottom right", "Bottom center", "Bottom left"], group = grpV)
 
 TZ = "America/New_York"
 colPos = #1f9e6e
@@ -58,7 +59,8 @@ at1530 = isIntra and hmc >= 1530 and hmc <= 1600 and (newDay or hmc[1] < 1530)
 lost   = inSess and hm >= 945 and not newDay and bias != 0 and aligned[1] and not aligned
 
 // ---------------------------------------------------------------- visuals
-plot(bias != 0 ? skipLvl : na, "Skip-if level (prior Supertrend)", color = dirCol, linewidth = 2, style = plot.style_stepline)
+// Always drawn: green/red = the "skip if" level on a setup day, gray = yesterday's Supertrend on a no-trade day
+plot(skipLvl, "Skip-if level (prior Supertrend)", color = bias == 0 ? color.new(colMut, 30) : dirCol, linewidth = 2, style = plot.style_stepline)
 plot(emaLvl, "Prior-day EMA45", color = color.new(colMut, 40), style = plot.style_stepline)
 bgcolor(showBg and aligned and (isIntra ? inSess : true) ? color.new(dirCol, 90) : na, title = "Aligned shading")
 plotshape(at945 and aligned and bias == 1, "CALLS setup 9:45", shape.triangleup, location.belowbar, colPos, text = "TL", size = size.tiny)
@@ -82,7 +84,17 @@ alertcondition(lost, "TriLock lost alignment", "TriLock {{ticker}}: lost trend a
 alertcondition(at1530, "TriLock 3:30 close reminder", "TriLock {{ticker}}: close today's trades by 3:50")
 
 // ---------------------------------------------------------------- status panel
-var table tb = table.new(position.top_right, 2, 8, bgcolor = color.new(chart.bg_color, 10), border_color = color.new(colMut, 70), border_width = 1)
+posOf(p) =>
+    switch p
+        "Top right"     => position.top_right
+        "Top center"    => position.top_center
+        "Top left"      => position.top_left
+        "Middle right"  => position.middle_right
+        "Bottom center" => position.bottom_center
+        "Bottom left"   => position.bottom_left
+        => position.bottom_right
+
+var table tb = table.new(posOf(tblPos), 2, 8, bgcolor = color.new(chart.bg_color, 10), border_color = color.new(colMut, 70), border_width = 1)
 
 row(tbl, r, k, v, c) =>
     table.cell(tbl, 0, r, k, text_color = chart.fg_color, text_size = size.small, text_halign = text.align_left)
@@ -94,7 +106,7 @@ if showTbl and barstate.islast
     row(tb, 2, "MACD", macdUp ? "> signal" : macdDn ? "< signal" : "flat", macdUp ? colPos : macdDn ? colNeg : colMut)
     row(tb, 3, "Supertrend", stUp ? "bullish" : stDn ? "bearish" : "flat", stUp ? colPos : stDn ? colNeg : colMut)
     row(tb, 4, "Now", bias == 0 ? "no setup" : aligned ? "aligned ✓" : "broken ✗", bias == 0 ? colMut : aligned ? colPos : colNeg)
-    row(tb, 5, "Skip if", bias == 0 ? "—" : skipTxt, chart.fg_color)
+    row(tb, 5, "Skip if", bias == 0 ? "no setup (gray line)" : skipTxt, bias == 0 ? colMut : chart.fg_color)
     clock = not isIntra ? "use 5m/15m chart" : hm < 945 ? "wait for 9:45" : hm < 1530 ? "trading window" : hm < 1550 ? "close trades now" : "done for today"
     row(tb, 6, "Clock (ET)", clock, hm >= 1530 and isIntra ? colNeg : chart.fg_color)
     exits = optFill > 0 ? str.tostring(optFill * (1 + tgtPct / 100), "#.##") + " / " + str.tostring(optFill * (1 - outPct / 100), "#.##") : "set fill in inputs"

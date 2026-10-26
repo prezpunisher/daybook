@@ -1,6 +1,15 @@
 {
  "runs": [
   {
+   "time": "2026-10-26T15:31:40-04:00",
+   "trigger": "schedule",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40387494731",
+   "kind": "reminder",
+   "result": "reminder sent",
+   "notified": true,
+   "seconds": 0
+  },
+  {
    "time": "2026-10-26T09:52:14-04:00",
    "trigger": "workflow_dispatch",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40334353930",
@@ -169,7 +178,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-10-26T09:52:14-04:00",
+ "last_checked": "2026-10-26T15:31:40-04:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

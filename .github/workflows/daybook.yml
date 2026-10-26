@@ -1,0 +1,61 @@
+name: Daybook
+
+on:
+  schedule:
+    # GitHub cron is UTC. Each job is listed at both its EDT and EST time; scanner.py checks
+    # Eastern time and only the run that lands in the right window does anything.
+    - cron: "40 13 * * 1-5"   # 9:40 ET in summer (EDT)
+    - cron: "40 14 * * 1-5"   # 9:40 ET in winter (EST)
+    - cron: "25 19 * * 1-5"   # 3:25 ET close reminder, summer
+    - cron: "25 20 * * 1-5"   # 3:25 ET close reminder, winter
+  workflow_dispatch:          # "Run workflow" button: builds a watchlist now
+
+concurrency: daybook          # never two runs at once (they share docs/status.json)
+
+permissions:
+  contents: write             # commit docs/status.json
+  pages: write                # publish the dashboard
+  id-token: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run scanner
+        id: scan
+        continue-on-error: true      # still save the failure to the dashboard
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          MAC_NOTIFICATIONS: "0"
+        run: python -W ignore scanner.py cloud
+      - name: Save run to dashboard
+        run: |
+          git config user.name "scanner-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/status.json
+          git diff --cached --quiet || (git commit -m "status: $(date -u +%FT%TZ)" && git push)
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Fail the job if the scan failed
+        if: steps.scan.outcome == 'failure'
+        run: exit 1
+
+  dashboard:
+    needs: scan
+    if: always()
+    runs-on: ubuntu-latest
+    continue-on-error: true          # dashboard hiccups never mark the scan as failed
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

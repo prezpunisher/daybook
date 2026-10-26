@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Daybook</title>
+<style>
+:root {
+  --surface-0: #f5f4f1;
+  --surface-1: #fcfcfb;
+  --border: #e3e2dd;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --pos: #1f9e6e;
+  --neg: #e34948;
+  --warn: #b7791f;
+  --mid: #f0efec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --pos: #18a070;
+    --neg: #e66767;
+    --warn: #d69e2e;
+    --mid: #383835;
+  }
+}
+:root[data-theme="dark"] {
+  --surface-0: #121211;
+  --surface-1: #1a1a19;
+  --border: #2e2e2c;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --pos: #18a070;
+  --neg: #e66767;
+  --warn: #d69e2e;
+  --mid: #383835;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 960px; margin: 0 auto; padding: 28px 16px 64px; }
+a { color: inherit; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; justify-content: space-between; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 17px; margin: 36px 0 12px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+h2 .meta { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+.sub { color: var(--text-secondary); margin: 6px 0 0; font-size: 14px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  background: var(--surface-1); border: 1px solid var(--border); font-weight: 600; font-size: 14px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
+.ok .dot { background: var(--pos); } .bad .dot { background: var(--neg); } .warn .dot { background: var(--warn); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { text-decoration: none; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-1); font-size: 14px; }
+.btn.primary { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.tile .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tile .l { color: var(--text-secondary); font-size: 13px; }
+.picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pick { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+  text-decoration: none; display: block; min-width: 0; }
+.pick:hover { border-color: var(--text-muted); }
+.pick .top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.pick .tk { font-size: 18px; font-weight: 700; }
+.pick .px { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #fff; letter-spacing: .02em; }
+.badge.calls { background: var(--pos); } .badge.puts { background: var(--neg); }
+.pick .ct { margin-top: 6px; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.pick .row { margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--text-secondary); }
+.pick .row b { color: var(--text-primary); font-weight: 600; }
+.pos { color: var(--pos); } .neg { color: var(--neg); } .muted { color: var(--text-muted); }
+.note { color: var(--text-muted); font-size: 13px; margin: 10px 0 0; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 4px 16px; overflow-x: auto; }
+.empty { background: var(--surface-1); border: 1px dashed var(--border); border-radius: 12px; padding: 24px; color: var(--text-secondary); text-align: center; }
+.day { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.step { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.step .t { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.step .s { font-weight: 600; margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--text-muted); font-weight: 500; font-size: 13px; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+.rules { display: flex; flex-wrap: wrap; gap: 8px; }
+.rules span { background: var(--mid); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
+@media (max-width: 680px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .picks, .day { grid-template-columns: 1fr; }
+  .hide-sm { display: none; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Daybook</h1>
+      <p class="sub" id="sub">Loading…</p>
+    </div>
+    <div class="btns">
+      <span class="pill" id="health"><span class="dot"></span><span>Checking…</span></span>
+      <a class="btn primary" id="runNow" target="_blank" rel="noopener">Run now</a>
+      <a class="btn" id="history" target="_blank" rel="noopener">GitHub runs</a>
+    </div>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <h2>Today <span class="meta" id="todayMeta"></span></h2>
+  <div class="day" id="day"></div>
+
+  <h2>Latest watchlist <span class="meta" id="wlMeta"></span></h2>
+  <div id="watchlist"></div>
+
+  <h2>Rules</h2>
+  <div class="rules" id="rules"></div>
+
+  <h2>Run history <span class="meta">most recent first</span></h2>
+  <div id="runs"></div>
+
+  <footer id="foot">Refreshes every 5 minutes. Callouts only; nothing here places trades.</footer>
+</main>
+
+<script>
+const TZ = "America/New_York";
+const SLOTS = [{ hm: [9, 40], kind: "watchlist", label: "Watchlist" }, { hm: [15, 25], kind: "reminder", label: "Close reminder" }];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function etParts(d) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TZ, hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", weekday: "short" })
+    .formatToParts(d).map(x => [x.type, x.value]));
+  return { y: +p.year, m: +p.month, d: +p.day, hh: +p.hour, mm: +p.minute, wd: p.weekday };
+}
+function etDate(y, m, d, hh, mm) {             // ET wall-clock time -> Date
+  const guess = Date.UTC(y, m - 1, d, hh, mm);
+  const p = etParts(new Date(guess));
+  const asUtc = Date.UTC(p.y, p.m - 1, p.d, p.hh, p.mm);
+  return new Date(guess - (asUtc - guess));
+}
+const fmtET = (d, opts) => new Intl.DateTimeFormat("en-US", { timeZone: TZ, ...opts }).format(d);
+const fmtTime = d => fmtET(d, { hour: "numeric", minute: "2-digit" });
+const fmtDay = d => fmtET(d, { weekday: "short", month: "short", day: "numeric" });
+function ago(d) {
+  const s = (Date.now() - d) / 1000;
+  if (s < 90) return "just now";
+  if (s < 3600) return Math.round(s / 60) + " min ago";
+  if (s < 86400 * 1.5) return Math.round(s / 3600) + " h ago";
+  return Math.round(s / 86400) + " days ago";
+}
+function slotsAround(now) {                    // weekday slots from 7 days back to 7 days ahead
+  const out = [];
+  for (let i = -7; i <= 7; i++) {
+    const p = etParts(new Date(now.getTime() + i * 86400000));
+    if (p.wd === "Sat" || p.wd === "Sun") continue;
+    for (const s of SLOTS) out.push({ ...s, at: etDate(p.y, p.m, p.d, s.hm[0], s.hm[1]) });
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+
+function repoLinks() {
+  const host = location.hostname, m = host.match(/^([^.]+)\.github\.io$/);
+  const repo = location.pathname.split("/").filter(Boolean)[0];
+  if (!m || !repo) return null;
+  const base = `https://github.com/${m[1]}/${repo}`;
+  return { run: `${base}/actions/workflows/daybook.yml`, runs: `${base}/actions` };
+}
+
+function render(status) {
+  const now = new Date();
+  const runs = (status.runs || []).map(r => ({ ...r, at: new Date(r.time) }));
+  const lastChecked = status.last_checked ? new Date(status.last_checked) : null;
+  const slots = slotsAround(now);
+  const next = slots.find(s => s.at > now);
+  const links = repoLinks();
+  if (links) { $("runNow").href = links.run; $("history").href = links.runs; }
+  else { $("runNow").style.display = $("history").style.display = "none"; }
+
+  // health: last real run failed, or a slot passed 75+ min ago with no run since
+  const last = runs[0];
+  const missed = slots.filter(s => s.at < now - 75 * 60000).pop();
+  let health = ["ok", "Healthy"];
+  if (!lastChecked) health = ["warn", "Waiting for first run"];
+  else if (last && last.result === "failed") health = ["bad", "Last run failed"];
+  else if (missed && lastChecked < missed.at) health = ["bad", `Missed ${fmtDay(missed.at)} ${fmtTime(missed.at)}`];
+  $("health").className = "pill " + health[0];
+  $("health").lastElementChild.textContent = health[1];
+  $("sub").textContent = (lastChecked ? `Last checked ${ago(lastChecked)}` : "No runs yet") +
+    (next ? ` · Next: ${fmtDay(next.at)} ${fmtTime(next.at)} ET (${next.label.toLowerCase()})` : "");
+
+  const wl = runs.find(r => r.kind === "watchlist" && r.result !== "failed");
+  const okRuns = runs.filter(r => r.kind !== "skip");
+  const fails = okRuns.filter(r => r.result === "failed").length;
+  const pushes = okRuns.filter(r => "notified" in r);
+  const tile = (v, l, cls = "") => `<div class="tile"><div class="v ${cls}">${esc(v)}</div><div class="l">${esc(l)}</div></div>`;
+  $("tiles").innerHTML =
+    tile(wl ? (wl.picks || []).length : "—", "names on the latest watchlist") +
+    tile(wl && wl.vix ? wl.vix : "—", wl && wl.vix_text ? wl.vix_text.replace(/^VIX [\d.]+ /, "VIX ") : "VIX") +
+    tile(okRuns.length ? `${okRuns.length - fails}/${okRuns.length}` : "—", "runs succeeded", fails ? "neg" : "") +
+    tile(pushes.length ? `${pushes.filter(r => r.notified).length}/${pushes.length}` : "—", "phone pushes delivered");
+
+  // today
+  const todayKey = fmtDay(now);
+  $("todayMeta").textContent = todayKey + (["Sat", "Sun"].includes(etParts(now).wd) ? " · market closed" : "");
+  const todays = slots.filter(s => fmtDay(s.at) === todayKey);
+  const step = (t, s, cls) => `<div class="step"><div class="t">${esc(t)}</div><div class="s ${cls}">${esc(s)}</div></div>`;
+  let dayHtml = "";
+  if (!todays.length) dayHtml = step("Weekend", "No runs today", "muted") + step("Next run", next ? `${fmtDay(next.at)} ${fmtTime(next.at)} ET` : "—", "");
+  else {
+    for (const s of todays) {
+      const r = runs.find(x => x.kind === s.kind && fmtDay(x.at) === todayKey);
+      const label = `${fmtTime(s.at)} ET · ${s.label}`;
+      if (r) dayHtml += step(label, r.result === "failed" ? "✗ Failed" : `✓ ${r.result} at ${fmtTime(r.at)}`, r.result === "failed" ? "neg" : "pos");
+      else dayHtml += step(label, s.at > now ? "Scheduled" : (now - s.at < 75 * 60000 ? "Running or queued…" : "✗ Did not run"),
+        s.at > now ? "muted" : (now - s.at < 75 * 60000 ? "" : "neg"));
+    }
+    dayHtml += step("3:50 ET · Your exit", "Out of every option opened today", "");
+  }
+  $("day").innerHTML = dayHtml;
+
+  // watchlist
+  if (!wl) {
+    $("wlMeta").textContent = "";
+    $("watchlist").innerHTML = `<div class="empty">No watchlist yet. The first one arrives ${next ? fmtDay(next.at) + " at 9:40 ET" : "on the next trading day"}${links ? ', or press <b>Run now</b> during market hours' : ""}.</div>`;
+  } else {
+    const p = wl.picks || [];
+    $("wlMeta").textContent = `${fmtDay(wl.at)} ${fmtTime(wl.at)} ET` +
+      (wl.universe ? ` · ${wl.universe.toLocaleString()} scanned → ${(wl.aligned ?? 0).toLocaleString()} aligned → ${p.length} picks` : "");
+    let html = p.length ? `<div class="picks">${p.map(x => {
+      const call = x.direction === "CALLS";
+      const chg = x.day_chg != null ? `<span class="${x.day_chg >= 0 ? "pos" : "neg"}">${x.day_chg >= 0 ? "+" : ""}${x.day_chg.toFixed(1)}% today</span>` : "";
+      return `<a class="pick" href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(x.ticker)}" target="_blank" rel="noopener">
+        <div class="top"><span class="badge ${call ? "calls" : "puts"}">${call ? "▲ CALLS" : "▼ PUTS"}</span>
+          <span class="tk">${esc(x.ticker)}</span><span class="px">$${Number(x.price).toFixed(2)}</span>${chg}</div>
+        <div class="ct">${esc(x.contract)}</div>
+        <div class="row"><span><b>${esc(x.size)}</b></span><span>skip if ${call ? "below" : "above"} <b>$${Number(x.stop).toFixed(2)}</b></span></div>
+      </a>`;
+    }).join("")}</div>` : `<div class="empty">${wl.result === "market closed" ? "Market was closed. Nothing sent." : "No names lined up with their trend. Sitting out is a trade too."}</div>`;
+    const extra = [];
+    if (wl.skipped_earnings && wl.skipped_earnings.length) extra.push("Earnings soon, skipped: " + wl.skipped_earnings.join(", "));
+    if (wl.skipped_pricey && wl.skipped_pricey.length) extra.push("1 contract over the size limit, skipped: " + wl.skipped_pricey.join(", "));
+    if (extra.length) html += extra.map(e => `<p class="note">${esc(e)}</p>`).join("");
+    $("watchlist").innerHTML = html;
+  }
+
+  // rules
+  const st = status.settings || {};
+  const rules = [];
+  if (st.take_profit != null) rules.push(`Sell the option at +${Math.round(st.take_profit * 100)}%`);
+  if (st.stop_loss) rules.push(`Way out at −${Math.round(st.stop_loss * 100)}%`);
+  rules.push("Out by 3:50 ET", "Only the direction shown");
+  if (st.max_trade) rules.push(`Max $${st.max_trade.toLocaleString()} per trade`);
+  rules.push("Limit orders at the mid");
+  $("rules").innerHTML = rules.map(r => `<span>${esc(r)}</span>`).join("");
+
+  // history
+  if (!okRuns.length) $("runs").innerHTML = `<div class="empty">Runs will appear here after the first scheduled scan.</div>`;
+  else $("runs").innerHTML = `<div class="card"><table>
+    <thead><tr><th>When (ET)</th><th>Run</th><th>Result</th><th class="r">Picks</th><th class="r">Push</th><th class="r hide-sm">Time</th><th class="hide-sm"></th></tr></thead>
+    <tbody>${okRuns.slice(0, 40).map(r => `<tr>
+      <td>${fmtDay(r.at)} ${fmtTime(r.at)}</td>
+      <td>${esc(r.kind === "watchlist" ? "Watchlist" : r.kind === "reminder" ? "Close reminder" : r.kind)}${r.trigger === "workflow_dispatch" ? ' <span class="muted">(manual)</span>' : ""}</td>
+      <td class="${r.result === "failed" ? "neg" : ""}" title="${esc(r.error || "")}">${esc(r.result === "failed" ? "✗ " + (r.error || "failed").slice(0, 60) : r.result)}</td>
+      <td class="r">${r.picks ? r.picks.length : "—"}</td>
+      <td class="r ${r.notified === false ? "neg" : ""}">${"notified" in r ? (r.notified ? "✓" : "✗") : "—"}</td>
+      <td class="r hide-sm">${r.seconds != null ? r.seconds + "s" : ""}</td>
+      <td class="hide-sm">${r.run_url ? `<a href="${esc(r.run_url)}" target="_blank" rel="noopener">log</a>` : ""}</td>
+    </tr>`).join("")}</tbody></table></div>`;
+}
+
+async function load() {
+  try {
+    const res = await fetch("status.json?t=" + Date.now(), { cache: "no-store" });
+    render(res.ok ? await res.json() : { runs: [] });
+  } catch (e) {
+    render({ runs: [] });
+  }
+}
+load();
+setInterval(load, 5 * 60 * 1000);
+</script>
+</body>
+</html>

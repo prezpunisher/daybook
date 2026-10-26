@@ -1,0 +1,101 @@
+//@version=6
+// TriLock Trend Day
+// Same rules as the options scanner's morning watchlist:
+//   CALLS day: at the PRIOR daily close, price > EMA45, MACD > signal, Supertrend bullish
+//   PUTS day:  at the PRIOR daily close, price < EMA45, MACD < signal, Supertrend bearish
+// During the day the setup stays valid while price holds on the trend side of yesterday's
+// Supertrend line ("skip if" level) and EMA45. Same-day trades only: out by 3:50 ET.
+//
+// Alerts: create ONE alert on this indicator with "Any alert() function call" to get the
+// 9:45 setup, lost-alignment and 3:30 close-reminder pushes for that symbol.
+indicator("TriLock Trend Day", shorttitle = "TriLock", overlay = true)
+
+// ---------------------------------------------------------------- inputs
+grpT = "Trend (daily, prior close)"
+emaLen  = input.int(45, "EMA length", minval = 1, group = grpT)
+macdF   = input.int(12, "MACD fast", minval = 1, group = grpT)
+macdS   = input.int(26, "MACD slow", minval = 1, group = grpT)
+macdSig = input.int(9, "MACD signal", minval = 1, group = grpT)
+stLen   = input.int(7, "Supertrend ATR length", minval = 1, group = grpT)
+stFac   = input.float(3.0, "Supertrend factor", minval = 0.1, step = 0.1, group = grpT)
+
+grpX = "Option exits"
+optFill = input.float(0.0, "My option fill price (0 = hide)", minval = 0, step = 0.01, group = grpX)
+tgtPct  = input.float(3.0, "Take profit %", minval = 0, step = 0.5, group = grpX)
+outPct  = input.float(20.0, "Way out %", minval = 0, step = 1, group = grpX)
+
+grpV = "Display"
+showBg  = input.bool(true, "Shade bars while aligned", group = grpV)
+showTbl = input.bool(true, "Show status panel", group = grpV)
+
+TZ = "America/New_York"
+colPos = #1f9e6e
+colNeg = #e34948
+colMut = color.gray
+
+// ---------------------------------------------------------------- daily trend (prior close, no repainting)
+dailyState() =>
+    e = ta.ema(close, emaLen)
+    [m, s, hist] = ta.macd(close, macdF, macdS, macdSig)
+    [st, dir] = ta.supertrend(stFac, stLen)
+    [close[1] > e[1], m[1] > s[1], dir[1] < 0, close[1] < e[1], m[1] < s[1], dir[1] > 0, st[1], e[1]]
+
+[emaUp, macdUp, stUp, emaDn, macdDn, stDn, skipLvl, emaLvl] = request.security(syminfo.tickerid, "D", dailyState(), lookahead = barmerge.lookahead_on)
+
+bias = emaUp and macdUp and stUp ? 1 : emaDn and macdDn and stDn ? -1 : 0
+aligned = bias == 1 ? close > skipLvl and close > emaLvl : bias == -1 ? close < skipLvl and close < emaLvl : false
+dirTxt = bias == 1 ? "CALLS" : bias == -1 ? "PUTS" : "NO TRADE"
+dirCol = bias == 1 ? colPos : bias == -1 ? colNeg : colMut
+
+// ---------------------------------------------------------------- clock (ET)
+isIntra = timeframe.isintraday
+newDay  = timeframe.change("D")
+hm  = hour(time, TZ) * 100 + minute(time, TZ)
+hmc = hour(time_close, TZ) * 100 + minute(time_close, TZ)
+inSess = isIntra and hm >= 930 and hm < 1600
+at945  = isIntra and hmc >= 945 and hmc <= 1600 and (newDay or hmc[1] < 945)
+at1530 = isIntra and hmc >= 1530 and hmc <= 1600 and (newDay or hmc[1] < 1530)
+lost   = inSess and hm >= 945 and not newDay and bias != 0 and aligned[1] and not aligned
+
+// ---------------------------------------------------------------- visuals
+plot(bias != 0 ? skipLvl : na, "Skip-if level (prior Supertrend)", color = dirCol, linewidth = 2, style = plot.style_stepline)
+plot(emaLvl, "Prior-day EMA45", color = color.new(colMut, 40), style = plot.style_stepline)
+bgcolor(showBg and aligned and (isIntra ? inSess : true) ? color.new(dirCol, 90) : na, title = "Aligned shading")
+plotshape(at945 and aligned and bias == 1, "CALLS setup 9:45", shape.triangleup, location.belowbar, colPos, text = "TL", size = size.tiny)
+plotshape(at945 and aligned and bias == -1, "PUTS setup 9:45", shape.triangledown, location.abovebar, colNeg, text = "TL", size = size.tiny)
+plotshape(lost, "Lost alignment", shape.xcross, location.abovebar, colMut, size = size.tiny)
+
+// ---------------------------------------------------------------- alerts
+px(v) => str.tostring(v, format.mintick)
+skipTxt = (bias == 1 ? "below " : "above ") + px(skipLvl)
+
+if at945 and aligned
+    alert("TriLock " + syminfo.ticker + ": " + dirTxt + " setup at 9:45 · price " + px(close) + " · skip if " + skipTxt + " · sell option +" + str.tostring(tgtPct) + "% / way out -" + str.tostring(outPct) + "%", alert.freq_once_per_bar_close)
+if lost
+    alert("TriLock " + syminfo.ticker + ": lost trend alignment at " + px(close) + " · no new trades, consider exiting", alert.freq_once_per_bar_close)
+if at1530
+    alert("TriLock " + syminfo.ticker + ": 3:30 · close today's trades by 3:50", alert.freq_once_per_bar_close)
+
+alertcondition(at945 and aligned and bias == 1, "TriLock CALLS setup (9:45)", "TriLock {{ticker}}: CALLS setup at 9:45, price {{close}}")
+alertcondition(at945 and aligned and bias == -1, "TriLock PUTS setup (9:45)", "TriLock {{ticker}}: PUTS setup at 9:45, price {{close}}")
+alertcondition(lost, "TriLock lost alignment", "TriLock {{ticker}}: lost trend alignment at {{close}}")
+alertcondition(at1530, "TriLock 3:30 close reminder", "TriLock {{ticker}}: close today's trades by 3:50")
+
+// ---------------------------------------------------------------- status panel
+var table tb = table.new(position.top_right, 2, 8, bgcolor = color.new(chart.bg_color, 10), border_color = color.new(colMut, 70), border_width = 1)
+
+row(tbl, r, k, v, c) =>
+    table.cell(tbl, 0, r, k, text_color = chart.fg_color, text_size = size.small, text_halign = text.align_left)
+    table.cell(tbl, 1, r, v, text_color = c, text_size = size.small, text_halign = text.align_right)
+
+if showTbl and barstate.islast
+    row(tb, 0, "TriLock", dirTxt, dirCol)
+    row(tb, 1, "EMA" + str.tostring(emaLen), emaUp ? "above" : emaDn ? "below" : "flat", emaUp ? colPos : emaDn ? colNeg : colMut)
+    row(tb, 2, "MACD", macdUp ? "> signal" : macdDn ? "< signal" : "flat", macdUp ? colPos : macdDn ? colNeg : colMut)
+    row(tb, 3, "Supertrend", stUp ? "bullish" : stDn ? "bearish" : "flat", stUp ? colPos : stDn ? colNeg : colMut)
+    row(tb, 4, "Now", bias == 0 ? "no setup" : aligned ? "aligned ✓" : "broken ✗", bias == 0 ? colMut : aligned ? colPos : colNeg)
+    row(tb, 5, "Skip if", bias == 0 ? "—" : skipTxt, chart.fg_color)
+    clock = not isIntra ? "use 5m/15m chart" : hm < 945 ? "wait for 9:45" : hm < 1530 ? "trading window" : hm < 1550 ? "close trades now" : "done for today"
+    row(tb, 6, "Clock (ET)", clock, hm >= 1530 and isIntra ? colNeg : chart.fg_color)
+    exits = optFill > 0 ? str.tostring(optFill * (1 + tgtPct / 100), "#.##") + " / " + str.tostring(optFill * (1 - outPct / 100), "#.##") : "set fill in inputs"
+    row(tb, 7, "Sell +" + str.tostring(tgtPct) + "% / out -" + str.tostring(outPct) + "%", exits, chart.fg_color)

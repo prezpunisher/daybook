@@ -1,0 +1,6 @@
+.venv/
+data/
+reports/
+__pycache__/
+.DS_Store
+.ntfy_topic

@@ -353,7 +353,7 @@ def earnings_soon(ticker):
 
 # ---------------------------------------------------------------- notify
 
-def notify(title, message, ticker=None, priority=3, tags=None):
+def notify(title, message, ticker=None, priority=3, tags=None, click=None):
     """Returns True if the phone push was accepted by ntfy."""
     sent = False
     if C.NTFY_TOPIC:
@@ -361,6 +361,8 @@ def notify(title, message, ticker=None, priority=3, tags=None):
                    "tags": tags or []}
         if ticker:
             payload["click"] = f"https://www.tradingview.com/chart/?symbol={ticker}"
+        if click:
+            payload["click"] = click
         try:
             sent = requests.post(C.NTFY_SERVER, json=payload, timeout=10).ok
         except Exception as e:
@@ -575,7 +577,7 @@ def run_trend_scan(dry_run=False, info=None):
     if dry_run:
         print(f"\n{title}\n{body}")
         return picks
-    info["notified"] = notify(title, body, priority=4, tags=["clipboard"])
+    info["notified"] = notify(title, body, priority=4, tags=["clipboard"], click=C.DASHBOARD_URL or None)
     info["result"] = "watchlist sent"
     new_file = not ALERTS_CSV.exists()
     with ALERTS_CSV.open("a", newline="") as f:

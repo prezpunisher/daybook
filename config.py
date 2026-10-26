@@ -60,4 +60,5 @@ NTFY_SERVER = "https://ntfy.sh"
 # Your private ntfy topic: from the NTFY_TOPIC env var (cloud secret) or the untracked .ntfy_topic file (Mac).
 _topic_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".ntfy_topic")
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC") or (open(_topic_file).read().strip() if os.path.exists(_topic_file) else "")
+DASHBOARD_URL = os.environ.get("DASHBOARD_URL", "")   # tapping the morning push opens this
 MAC_NOTIFICATIONS = os.environ.get("MAC_NOTIFICATIONS", "1") == "1"   # the cloud run sets this to 0

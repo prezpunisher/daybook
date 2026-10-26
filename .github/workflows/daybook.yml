@@ -41,6 +41,7 @@ jobs:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           MAC_NOTIFICATIONS: "0"
           UNIVERSE_MAX_AGE_HOURS: "168"
+          DASHBOARD_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
         run: python -W ignore scanner.py cloud
       - name: Save run to dashboard
         run: |

@@ -126,6 +126,9 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
   <h2>Latest watchlist <span class="meta" id="wlMeta"></span></h2>
   <div id="watchlist"></div>
 
+  <h2>Scorecard <span class="meta" id="scMeta"></span></h2>
+  <div id="scorecard"></div>
+
   <h2>Rules</h2>
   <div class="rules" id="rules"></div>
 
@@ -136,8 +139,8 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 </main>
 
 <script>
-const TZ = "America/New_York";
-const SLOTS = [{ hm: [8, 5], kind: "premarket", label: "Premarket check" }, { hm: [9, 40], kind: "watchlist", label: "Watchlist" }, { hm: [15, 25], kind: "reminder", label: "Close reminder" }];
+const TZ = "America/Chicago";               // everything shown in Central
+const SLOTS = [{ hm: [7, 5], kind: "premarket", label: "Premarket check" }, { hm: [8, 40], kind: "watchlist", label: "Watchlist" }, { hm: [14, 25], kind: "reminder", label: "Close reminder" }];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -147,7 +150,7 @@ function etParts(d) {
     .formatToParts(d).map(x => [x.type, x.value]));
   return { y: +p.year, m: +p.month, d: +p.day, hh: +p.hour, mm: +p.minute, wd: p.weekday };
 }
-function etDate(y, m, d, hh, mm) {             // ET wall-clock time -> Date
+function etDate(y, m, d, hh, mm) {             // CT wall-clock time -> Date
   const guess = Date.UTC(y, m - 1, d, hh, mm);
   const p = etParts(new Date(guess));
   const asUtc = Date.UTC(p.y, p.m - 1, p.d, p.hh, p.mm);
@@ -201,7 +204,7 @@ function render(status) {
   $("health").className = "pill " + health[0];
   $("health").lastElementChild.textContent = health[1];
   $("sub").textContent = (lastChecked ? `Last checked ${ago(lastChecked)}` : "No runs yet") +
-    (next ? ` · Next: ${fmtDay(next.at)} ${fmtTime(next.at)} ET (${next.label.toLowerCase()})` : "");
+    (next ? ` · Next: ${fmtDay(next.at)} ${fmtTime(next.at)} CT (${next.label.toLowerCase()})` : "");
 
   const wl = runs.find(r => r.kind === "watchlist" && r.result !== "failed");
   const okRuns = runs.filter(r => r.kind !== "skip");
@@ -220,26 +223,26 @@ function render(status) {
   const todays = slots.filter(s => fmtDay(s.at) === todayKey);
   const step = (t, s, cls) => `<div class="step"><div class="t">${esc(t)}</div><div class="s ${cls}">${esc(s)}</div></div>`;
   let dayHtml = "";
-  if (!todays.length) dayHtml = step("Weekend", "No runs today", "muted") + step("Next run", next ? `${fmtDay(next.at)} ${fmtTime(next.at)} ET` : "—", "");
+  if (!todays.length) dayHtml = step("Weekend", "No runs today", "muted") + step("Next run", next ? `${fmtDay(next.at)} ${fmtTime(next.at)} CT` : "—", "");
   else {
     for (const s of todays) {
       const r = runs.find(x => x.kind === s.kind && fmtDay(x.at) === todayKey);
-      const label = `${fmtTime(s.at)} ET · ${s.label}`;
+      const label = `${fmtTime(s.at)} CT · ${s.label}`;
       if (r) dayHtml += step(label, r.result === "failed" ? "✗ Failed" : `✓ ${r.result} at ${fmtTime(r.at)}`, r.result === "failed" ? "neg" : "pos");
       else dayHtml += step(label, s.at > now ? "Scheduled" : (now - s.at < 75 * 60000 ? "Running or queued…" : "✗ Did not run"),
         s.at > now ? "muted" : (now - s.at < 75 * 60000 ? "" : "neg"));
     }
-    dayHtml += step("3:50 ET · Your exit", "Out of every option opened today", "");
+    dayHtml += step("2:50 CT · Your exit", "Out of every option opened today", "");
   }
   $("day").innerHTML = dayHtml;
 
   // watchlist
   if (!wl) {
     $("wlMeta").textContent = "";
-    $("watchlist").innerHTML = `<div class="empty">No watchlist yet. The first one arrives ${next ? fmtDay(next.at) + " at 9:40 ET" : "on the next trading day"}${links ? ', or press <b>Run now</b> during market hours' : ""}.</div>`;
+    $("watchlist").innerHTML = `<div class="empty">No watchlist yet. The first one arrives ${next ? fmtDay(next.at) + " at 8:40 CT" : "on the next trading day"}${links ? ', or press <b>Run now</b> during market hours' : ""}.</div>`;
   } else {
     const p = wl.picks || [];
-    $("wlMeta").textContent = `${fmtDay(wl.at)} ${fmtTime(wl.at)} ET` +
+    $("wlMeta").textContent = `${fmtDay(wl.at)} ${fmtTime(wl.at)} CT` +
       (wl.universe ? ` · ${wl.universe.toLocaleString()} scanned → ${(wl.aligned ?? 0).toLocaleString()} aligned → ${p.length} picks` : "");
     let html = p.length ? `<div class="picks">${p.map(x => {
       const call = x.direction === "CALLS";
@@ -258,12 +261,36 @@ function render(status) {
     $("watchlist").innerHTML = html;
   }
 
+  // scorecard: written by the afternoon reminder run, option level, times in CT
+  const sc = runs.find(r => r.kind === "reminder" && r.scorecard && r.scorecard.length);
+  if (!sc) {
+    $("scMeta").textContent = "";
+    $("scorecard").innerHTML = `<div class="empty">After the 2:25 CT run, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5% or −20%.</div>`;
+  } else {
+    const rows = sc.scorecard, n = rows.length;
+    const h3 = rows.filter(r => r.hit3).length, h5 = rows.filter(r => r.hit5).length;
+    const pct = v => `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${Math.round(v * 100)}%</span>`;
+    const t = (v, cls) => v ? `<span class="${cls}">${esc(v)}</span>` : `<span class="muted">—</span>`;
+    $("scMeta").textContent = `${fmtDay(sc.at)} · alert ${rows[0].alert} CT · ${h3}/${n} hit +3% · ${h5}/${n} hit +5%`;
+    $("scorecard").innerHTML = `<div class="card"><table>
+      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm">Best</th><th class="r hide-sm">At 2:25</th></tr></thead>
+      <tbody>${rows.map(r => `<tr>
+        <td>${r.direction === "CALLS" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted hide-sm">${esc(r.symbol)}</span></td>
+        <td class="r">${r.vol_alert_min.toLocaleString()}</td>
+        <td class="r hide-sm">${r.vol_before_alert.toLocaleString()}</td>
+        <td class="r">$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span></td>
+        <td class="r">${t(r.hit3, "pos")}</td><td class="r">${t(r.hit5, "pos")}</td><td class="r">${t(r.hit20, "neg")}</td>
+        <td class="r hide-sm">${pct(r.best)}</td><td class="r hide-sm">${pct(r.now)}</td>
+      </tr>`).join("")}</tbody></table></div>
+      <p class="note">Bought = first option trade after the push. Vol = contracts traded in the alert minute / earlier today. Low volume means the +3% print may be one small trade.</p>`;
+  }
+
   // rules
   const st = status.settings || {};
   const rules = [];
   if (st.take_profit != null) rules.push(`Sell the option at +${Math.round(st.take_profit * 100)}%`);
   if (st.stop_loss) rules.push(`Way out at −${Math.round(st.stop_loss * 100)}%`);
-  rules.push("Out by 3:50 ET", "Only the direction shown");
+  rules.push("Out by 2:50 CT", "Only the direction shown");
   if (st.max_trade) rules.push(`Max $${st.max_trade.toLocaleString()} per trade`);
   rules.push("Limit orders at the mid");
   $("rules").innerHTML = rules.map(r => `<span>${esc(r)}</span>`).join("");
@@ -271,7 +298,7 @@ function render(status) {
   // history
   if (!okRuns.length) $("runs").innerHTML = `<div class="empty">Runs will appear here after the first scheduled scan.</div>`;
   else $("runs").innerHTML = `<div class="card"><table>
-    <thead><tr><th>When (ET)</th><th>Run</th><th>Result</th><th class="r">Picks</th><th class="r">Push</th><th class="r hide-sm">Time</th><th class="hide-sm"></th></tr></thead>
+    <thead><tr><th>When (CT)</th><th>Run</th><th>Result</th><th class="r">Picks</th><th class="r">Push</th><th class="r hide-sm">Time</th><th class="hide-sm"></th></tr></thead>
     <tbody>${okRuns.slice(0, 40).map(r => `<tr>
       <td>${fmtDay(r.at)} ${fmtTime(r.at)}</td>
       <td>${esc({ watchlist: "Watchlist", reminder: "Close reminder", premarket: "Premarket check" }[r.kind] || r.kind)}${r.trigger === "workflow_dispatch" ? ' <span class="muted">(manual)</span>' : ""}</td>

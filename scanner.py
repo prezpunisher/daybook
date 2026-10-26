@@ -44,7 +44,14 @@ STATE_FILE = DATA / "state.json"
 ALERTS_CSV = DATA / "alerts.csv"
 STATUS_FILE = ROOT / "docs" / "status.json"      # read by the dashboard (docs/index.html)
 STATUS_KEEP = 120
-ET = ZoneInfo("America/New_York")
+ET = ZoneInfo("America/New_York")    # market clock: all scheduling logic runs on Eastern time
+CT = ZoneInfo("America/Chicago")     # what the user reads: every push and the dashboard show Central
+
+
+def ct(hm_et):
+    """"09:45" (Eastern) -> "8:45 CT"."""
+    t = datetime.combine(datetime.now(ET).date(), datetime.strptime(hm_et, "%H:%M").time(), ET).astimezone(CT)
+    return f"{t.hour % 12 or 12}:{t.minute:02d} CT"
 RATE = 0.04
 
 logging.basicConfig(
@@ -292,15 +299,15 @@ def suggest_contract(ticker, direction, price, target_dte, min_dte):
         except yf.exceptions.YFRateLimitError:
             time.sleep(5 * 2 ** attempt)
         except Exception as e:
-            return f"chain unavailable ({e.__class__.__name__})", None, None
-    return "chain unavailable (rate limited)", None, None
+            return f"chain unavailable ({e.__class__.__name__})", None, None, None
+    return "chain unavailable (rate limited)", None, None, None
 
 
 def _suggest_contract(ticker, direction, price, target_dte, min_dte):
     tk = yf.Ticker(ticker)
     exps = tk.options
     if not exps:
-        return "no listed options found", None, None
+        return "no listed options found", None, None, None
     today = date.today()
     cands = [(e, (date.fromisoformat(e) - today).days) for e in exps]
     cands = [x for x in cands if x[1] >= min_dte] or cands
@@ -310,7 +317,7 @@ def _suggest_contract(ticker, direction, price, target_dte, min_dte):
     tbl = chain.calls if call else chain.puts
     tbl = tbl.iloc[(tbl["strike"] - price).abs().argsort()[:1]]
     if tbl.empty:
-        return "no strikes near price", None, None
+        return "no strikes near price", None, None, None
     row = tbl.iloc[0]
     bid, ask = float(row["bid"] or 0), float(row["ask"] or 0)
     oi = int(row["openInterest"]) if not math.isnan(row["openInterest"]) else 0
@@ -322,7 +329,7 @@ def _suggest_contract(ticker, direction, price, target_dte, min_dte):
     if mid and (ask - bid) / mid > C.MAX_SPREAD_PCT:
         warn.append("wide spread")
     exp_s = datetime.strptime(exp, "%Y-%m-%d").strftime("%b %d")
-    s = f"{exp_s} ${row['strike']:g}{'C' if call else 'P'} ({dte} DTE) {bid:.2f}/{ask:.2f}, OI {oi:,}"
+    s = f"{exp_s} ${row['strike']:g}{'C' if call else 'P'} ({dte} DTE) {bid:.2f}/{ask:.2f} at {datetime.now(CT):%-I:%M} CT, OI {oi:,}"
     if iv > 0.01:
         s += f", IV {iv:.0%}"
     if warn:
@@ -331,7 +338,7 @@ def _suggest_contract(ticker, direction, price, target_dte, min_dte):
     if mid > 0 and iv > 0.01:
         target_stock = stock_price_for_target(price, float(row["strike"]), dte / 365, iv, call, C.TAKE_PROFIT)
         target = f"+{C.TAKE_PROFIT:.0%} target: option ~${mid * (1 + C.TAKE_PROFIT):.2f} ≈ stock ${target_stock:.2f}"
-    return s, target, ask or None
+    return s, target, ask or None, row.get("contractSymbol")
 
 
 def earnings_soon(ticker):
@@ -467,7 +474,7 @@ def run_scan(mode, dry_run=False):
         ]
         h["contract"] = ""
         if i < C.MAX_INDIVIDUAL_ALERTS:
-            h["contract"], target, _ = suggest_contract(h["ticker"], h["direction"], h["price"], *dte)
+            h["contract"], target, _, _ = suggest_contract(h["ticker"], h["direction"], h["price"], *dte)
             lines.append(f"Idea: {h['contract']}")
             if target:
                 lines.append(target)
@@ -556,7 +563,7 @@ def run_trend_scan(dry_run=False, info=None):
             skipped.append(f"{h['ticker']} ({er:%b %d})")
             continue
         h["earnings_unknown"] = er == "unknown"
-        h["contract"], h["target"], ask = suggest_contract(h["ticker"], h["direction"], h["price"],
+        h["contract"], h["target"], ask, h["symbol"] = suggest_contract(h["ticker"], h["direction"], h["price"],
                                                            weekly_dte(today), C.WEEKLY_MIN_DTE)
         if not ask:
             continue
@@ -565,11 +572,12 @@ def run_trend_scan(dry_run=False, info=None):
             pricey.append(h["ticker"])
             continue
         h["size"] = f"max {h['qty']} contract{'s' if h['qty'] != 1 else ''} (${h['qty'] * ask * 100:,.0f})"
+        h["mid"] = round((ask + float(h["contract"].split(" at ")[0].split()[-1].split("/")[0])) / 2, 2)
         picks.append(h)
 
     info.update(aligned=len(cands), skipped_earnings=skipped, skipped_pricey=pricey,
                 picks=[{k: (round(v, 2) if isinstance(v, float) else v) for k, v in h.items()
-                        if k in ("ticker", "direction", "price", "stop", "day_chg", "contract", "target", "qty", "size")}
+                        if k in ("ticker", "direction", "price", "stop", "day_chg", "contract", "target", "qty", "size", "symbol", "mid")}
                        for h in picks])
     lines = []
     for h in picks:
@@ -607,7 +615,7 @@ def run_trend_scan(dry_run=False, info=None):
 
 
 def run_premarket(dry_run=False, info=None):
-    """~8:15 ET: system check + the likely watchlist (trend aligned at the last close) with premarket moves.
+    """~8:15 ET (7:15 CT): system check + the likely watchlist (trend aligned at the last close) with premarket moves.
     The real list still comes at 9:45, after the open, with contracts and sizes."""
     info = {} if info is None else info
     universe = get_universe()
@@ -695,7 +703,7 @@ def run_premarket(dry_run=False, info=None):
     body = "\n".join([mkt, f"{len(cands):,} names trend-aligned at the last close. Likely list:"] + lines +
                       (["Earnings soon, skipped: " + ", ".join(skipped)] if skipped else []) +
                       ([f"~1 contract over ${C.MAX_TRADE_DOLLARS:,}, skipped: " + ", ".join(pricey)] if pricey else []) +
-                      [f"Final list with contracts and sizes at {C.TREND_SCAN_TIME_ET} ET."])
+                      [f"Final list with contracts and sizes around {ct(C.TREND_SCAN_TIME_ET)}."])
     info.update(market=mkt, skipped_earnings=skipped, skipped_pricey=pricey,
                 picks=[{"ticker": h["ticker"], "direction": h["direction"], "price": round(h["close"], 2),
                         "stop": round(h["stop"], 2), "premarket": round(h["premarket"], 2) if h["premarket"] else None,
@@ -709,10 +717,67 @@ def run_premarket(dry_run=False, info=None):
     return picks
 
 
-def close_reminder():
-    return notify("⏰ Close today's trades",
-           "Sell every option you opened today before 3:50. Holding overnight is where the big losses came from.",
-           priority=4, tags=["alarm_clock"])
+def close_reminder(info=None):
+    info = {} if info is None else info
+    try:
+        info["scorecard"] = score_today()
+    except Exception as e:                  # the reminder matters more than the scorecard
+        log.warning("scorecard failed: %s", e)
+        info["scorecard"] = []
+    body = f"Sell every option you opened today before {ct('15:50')}. Holding overnight is where the big losses came from."
+    sc = info["scorecard"]
+    if sc:
+        hit3, hit5 = sum(r["hit3"] is not None for r in sc), sum(r["hit5"] is not None for r in sc)
+        body += (f"\n\nToday's alerts, buying the first trade after the {sc[0]['alert']} push: "
+                 f"{hit3}/{len(sc)} reached +3%, {hit5}/{len(sc)} reached +5%")
+        body += "".join(f"\n{r['ticker']}: +3% {r['hit3'] or '—'} · +5% {r['hit5'] or '—'} · -20% {r['hit20'] or '—'}"
+                        for r in sc)
+    return notify("⏰ Close today's trades", body, priority=4, tags=["alarm_clock"], click=C.DASHBOARD_URL or None)
+
+
+def score_today():
+    """For today's watchlist: option volume when the push went out, and when the option first traded
+    +3% / +5% / -20% from the first trade after the push. Times in CT. 1-minute option data from Yahoo."""
+    try:
+        runs = json.loads(STATUS_FILE.read_text()).get("runs", [])
+    except Exception:
+        return []
+    today = datetime.now(ET).date().isoformat()
+    w = next((r for r in runs if r.get("kind") == "watchlist" and r.get("picks") and r["time"][:10] == today), None)
+    if not w:
+        return []
+    push = (datetime.fromisoformat(w["time"]) + timedelta(seconds=w.get("seconds", 0))).astimezone(CT)
+    push_min = pd.Timestamp(push).floor("min")
+    out = []
+    for p in w["picks"]:
+        sym = p.get("symbol")
+        if not sym:
+            continue
+        try:
+            h = yf.Ticker(sym).history(period="1d", interval="1m")
+        except Exception as e:
+            log.warning("score %s: %s", sym, e)
+            continue
+        if h.empty:
+            continue
+        h.index = h.index.tz_convert(CT)
+        sofar, after = h[h.index <= push_min], h[h.index > push_min]
+        if after.empty:
+            continue
+        entry = float(after["Open"].iloc[0])
+        first = lambda m: m.index[0].strftime("%-I:%M") if len(m) else None
+        out.append({"ticker": p["ticker"], "direction": p["direction"], "symbol": sym,
+                    "alert": push.strftime("%-I:%M"), "quoted_mid": p.get("mid"),
+                    "entry": round(entry, 2), "entry_time": after.index[0].strftime("%-I:%M"),
+                    "vol_alert_min": int(sofar["Volume"].iloc[-1]) if len(sofar) else 0,
+                    "vol_before_alert": int(sofar["Volume"].sum()),
+                    "hit3": first(after[after["High"] >= entry * 1.03]),
+                    "hit5": first(after[after["High"] >= entry * 1.05]),
+                    "hit20": first(after[after["Low"] <= entry * 0.80]),
+                    "best": round(float(after["High"].max()) / entry - 1, 3),
+                    "now": round(float(after["Close"].iloc[-1]) / entry - 1, 3)})
+        time.sleep(1)
+    return out
 
 
 def cloud():
@@ -742,14 +807,15 @@ def cloud():
                 entry["notified"] = notify("✅ Daybook test run OK",
                                            "Cloud run worked. Market is closed, so no watchlist this time.", priority=3)
         elif "15:20" <= hm <= "15:55" and C.CLOSE_REMINDER_ET:
-            entry.update(kind="reminder", result="reminder sent", notified=close_reminder())
+            entry.update(kind="reminder", result="reminder sent")
+            entry["notified"] = close_reminder(info=entry)
         else:
             # the duplicate DST cron: expected, harmless
-            entry.update(kind="skip", result=f"{hm} ET is outside both windows")
+            entry.update(kind="skip", result=f"{ct(hm)} is outside the run windows")
     except Exception as e:
         log.exception("cloud run failed")
         entry.update(result="failed", error=f"{e.__class__.__name__}: {e}"[:300])
-        entry["notified"] = notify("⚠️ Scanner failed", f"The {hm} ET run hit an error: {entry['error']}", priority=4)
+        entry["notified"] = notify("⚠️ Scanner failed", f"The {ct(hm)} run hit an error: {entry['error']}", priority=4)
         raise
     finally:
         entry["seconds"] = round(time.time() - t0)
@@ -788,7 +854,7 @@ def record_run(entry):
     STATUS_FILE.write_text(json.dumps(status, indent=1, default=str))
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
-        md = [f"## {entry.get('kind', 'run').title()}: {entry.get('result', '')}", f"{entry['time']} · {entry['seconds']}s"]
+        md = [f"## {entry.get('kind', 'run').title()}: {entry.get('result', '')}", f"{datetime.fromisoformat(entry['time']).astimezone(CT):%Y-%m-%d %-I:%M %p} CT · {entry['seconds']}s"]
         if entry.get("picks"):
             md += ["", "| | Ticker | Price | Contract | Size | Skip if |", "|---|---|---|---|---|---|"]
             md += [f"| {'🟢' if p['direction'] == 'CALLS' else '🔴'} {p['direction']} | {p['ticker']} | ${p['price']} | "
@@ -863,7 +929,7 @@ def main():
                "🔴 NVDA $210.96 (-0.6% today)\n   Oct 30 $210P (5 DTE) 3.90/3.95, OI 19,110\n   max 2 contracts ($790) · skip if above $233.44\n"
                "🟢 AAPL $347.73 (-0.1% today)\n   Oct 30 $347.5C (5 DTE) 4.35/4.60, OI 1,800\n   max 2 contracts ($920) · skip if below $326.72\n"
                f"Rules: in and out today · sell the option at +{C.TAKE_PROFIT:.0%} or more, or at -{C.STOP_LOSS:.0%} · "
-               f"max ${C.MAX_TRADE_DOLLARS:,} per trade\nThis is a test. Real watchlist arrives 9:45 ET on trading days.",
+               f"max ${C.MAX_TRADE_DOLLARS:,} per trade\nThis is a test. Real watchlist arrives around {ct(C.TREND_SCAN_TIME_ET)} on trading days.",
                priority=4, tags=["clipboard"])
         print("Sent test notification.")
     else:

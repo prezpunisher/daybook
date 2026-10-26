@@ -6,11 +6,16 @@ phone (ntfy) and Mac. It only sends alerts and never places trades.
 ## Default: trend watchlist (`STRATEGY = "trend"` in config.py)
 The pattern: trade with the daily trend, weekly options, same day, small size.
 
-- **9:45 ET:** one push listing up to 8 of the most liquid names whose EMA45, MACD and Supertrend all
+- **~7:15 CT:** premarket check with futures, VIX and the likely list.
+- **8:45 CT:** one push listing up to 8 of the most liquid names whose EMA45, MACD and Supertrend all
   agreed at yesterday's close and that are still on the trend side this morning. Each line has a
   weekly ATM contract and how many contracts fit under `MAX_TRADE_DOLLARS` ($1,000 by default).
   Names reporting earnings within 7 days, and names where one contract costs more than the limit, are skipped.
-- **3:30 ET:** a reminder to close every option opened that day.
+- **2:25 CT:** a reminder to close every option opened that day, plus a scorecard of the morning's alerts
+  (option volume at the alert, and when each option first hit +3%, +5% or −20%). Also on the dashboard.
+
+All times shown in pushes, on the dashboard and in TradingView are Central. The scheduling logic runs on
+Eastern (market) time, so daylight saving never shifts anything.
 
 Backtests (`backtest_trend.py`, plus a 5-year open-to-close check) found no entry timing that predicts
 direction better than a coin flip, so the watchlist does not say *when* to buy. Its job is to keep

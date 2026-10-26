@@ -335,20 +335,32 @@ def _suggest_contract(ticker, direction, price, target_dte, min_dte):
 
 
 def earnings_soon(ticker):
-    """Next earnings date if it falls within EARNINGS_BUFFER_DAYS, else None."""
-    for attempt in range(3):
+    """Next earnings date if within EARNINGS_BUFFER_DAYS, None if not, "unknown" if Yahoo won't say.
+    A throttled Yahoo can return an empty calendar instead of an error, so empty counts as a miss."""
+    for attempt in range(5):
         try:
-            dates = (yf.Ticker(ticker).calendar or {}).get("Earnings Date") or []
-            break
+            cal = yf.Ticker(ticker).calendar or {}
         except yf.exceptions.YFRateLimitError:
-            time.sleep(5 * 2 ** attempt)
+            cal = None
         except Exception:
+            cal = None
+        if cal and "Earnings Date" in cal:
+            break
+        if cal is not None and cal:          # real calendar without earnings (e.g. some ETFs)
             return None
+        time.sleep(3 * 2 ** attempt)
     else:
-        return None
+        return "unknown"
     today = date.today()
-    soon = [d for d in dates if 0 <= (d - today).days <= C.EARNINGS_BUFFER_DAYS]
+    soon = [d for d in cal["Earnings Date"] or [] if 0 <= (d - today).days <= C.EARNINGS_BUFFER_DAYS]
     return min(soon) if soon else None
+
+
+def est_contract_cost(ticker_df, call, dte):
+    """Rough ATM weekly cost per contract from realized vol (premarket, before real quotes)."""
+    c = ticker_df["Close"]
+    vol = max(float(np.log(c).diff().tail(20).std() * math.sqrt(252)) * 1.1, 0.25)
+    return bs_price(float(c.iloc[-1]), float(c.iloc[-1]), dte / 365, vol, call) * 100
 
 
 # ---------------------------------------------------------------- notify
@@ -442,7 +454,7 @@ def run_scan(mode, dry_run=False):
 
     log.info("%s scan: %d callouts", mode, len(hits))
     if hits:
-        time.sleep(5)  # let Yahoo's rate limiter cool off after the bulk download
+        time.sleep(20)  # let Yahoo's rate limiter cool off after the bulk download
     for i, h in enumerate(hits):
         call = h["direction"] == "CALLS"
         ago = h["bars_since_cross"]
@@ -534,15 +546,16 @@ def run_trend_scan(dry_run=False, info=None):
                       "day_chg": (price / float(p["prev_close"]) - 1) * 100})
     log.info("trend scan: %d aligned names", len(cands))
 
-    time.sleep(5)  # let Yahoo's rate limiter cool off after the bulk download
+    time.sleep(20)  # let Yahoo's rate limiter cool off after the bulk download
     picks, skipped, pricey = [], [], []
     for h in cands:
         if len(picks) >= C.WATCHLIST_SIZE:
             break
         er = earnings_soon(h["ticker"])
-        if er:
+        if er and er != "unknown":
             skipped.append(f"{h['ticker']} ({er:%b %d})")
             continue
+        h["earnings_unknown"] = er == "unknown"
         h["contract"], h["target"], ask = suggest_contract(h["ticker"], h["direction"], h["price"],
                                                            weekly_dte(today), C.WEEKLY_MIN_DTE)
         if not ask:
@@ -562,7 +575,8 @@ def run_trend_scan(dry_run=False, info=None):
     for h in picks:
         call = h["direction"] == "CALLS"
         lines.append(f"{'🟢' if call else '🔴'} {h['ticker']} ${h['price']:.2f} ({h['day_chg']:+.1f}% today)\n"
-                     f"   {h['contract']}\n   {h['size']} · skip if {'below' if call else 'above'} ${h['stop']:.2f}")
+                     f"   {h['contract']}\n   {h['size']} · skip if {'below' if call else 'above'} ${h['stop']:.2f}"
+                     + ("\n   ⚠️ earnings date unknown, check before trading" if h.get("earnings_unknown") else ""))
     stop = f", or at -{C.STOP_LOSS:.0%}" if C.STOP_LOSS else ""
     rules = (f"Rules: in and out today · sell the option at +{C.TAKE_PROFIT:.0%} or more{stop} · "
              f"max ${C.MAX_TRADE_DOLLARS:,} per trade · only the direction shown")
@@ -592,6 +606,109 @@ def run_trend_scan(dry_run=False, info=None):
     return picks
 
 
+def run_premarket(dry_run=False, info=None):
+    """~8:15 ET: system check + the likely watchlist (trend aligned at the last close) with premarket moves.
+    The real list still comes at 9:45, after the open, with contracts and sizes."""
+    info = {} if info is None else info
+    universe = get_universe()
+    tickers = [u["ticker"] for u in universe]
+    data = download(tickers, period="1y", interval="1d")
+    today = datetime.now(ET).date()
+    info.update(universe=len(tickers), downloaded=len(data))
+
+    # trend at the most recent completed close (premarket, today's candle hasn't started)
+    cands = []
+    for t in tickers:
+        df = data.get(t)
+        if df is None or len(df) < C.EMA_LEN + 30:
+            continue
+        if df.index[-1].date() >= today:
+            df = df[df.index.date < today]
+        try:
+            last = indicators(df).iloc[-1]
+        except Exception:
+            continue
+        c = last["close"]
+        if c > last["ema"] and last["macd"] > last["macd_sig"] and last["st_bull"]:
+            d = "CALLS"
+        elif c < last["ema"] and last["macd"] < last["macd_sig"] and not last["st_bull"]:
+            d = "PUTS"
+        else:
+            continue
+        cands.append({"ticker": t, "direction": d, "close": float(c), "stop": float(last["st_line"]),
+                      "ema": float(last["ema"])})
+    info["aligned"] = len(cands)
+
+    time.sleep(20)  # let Yahoo's rate limiter cool off after the bulk download
+    picks, skipped, pricey = [], [], []
+    dte = weekly_dte(today)
+    for h in cands:
+        if len(picks) >= C.WATCHLIST_SIZE:
+            break
+        df = data[h["ticker"]]
+        if est_contract_cost(df[df.index.date < today], h["direction"] == "CALLS", dte) > C.MAX_TRADE_DOLLARS:
+            pricey.append(h["ticker"])
+            continue
+        er = earnings_soon(h["ticker"])
+        if er and er != "unknown":
+            skipped.append(f"{h['ticker']} ({er:%b %d})")
+            continue
+        h["earnings_unknown"] = er == "unknown"
+        picks.append(h)
+
+    # premarket prices for the picks + index futures
+    pre = {}
+    try:
+        pm = yf.download([h["ticker"] for h in picks] + ["SPY", "QQQ"], period="1d", interval="5m",
+                         prepost=True, group_by="ticker", progress=False, auto_adjust=False)
+        for t in [h["ticker"] for h in picks] + ["SPY", "QQQ"]:
+            try:
+                pre[t] = float(pm[t]["Close"].dropna().iloc[-1])
+            except Exception:
+                pass
+    except Exception as e:
+        log.warning("premarket prices unavailable: %s", e)
+    futs = []
+    for sym, name in [("ES=F", "S&P fut"), ("NQ=F", "Nasdaq fut")]:
+        try:
+            fi = yf.Ticker(sym).fast_info
+            futs.append(f"{name} {(fi['last_price'] / fi['previous_close'] - 1) * 100:+.1f}%")
+        except Exception:
+            pass
+    vix, vix_text = get_vix()
+
+    lines = []
+    for h in picks:
+        call = h["direction"] == "CALLS"
+        p = pre.get(h["ticker"])
+        h["premarket"] = p
+        h["gap"] = (p / h["close"] - 1) * 100 if p else None
+        risk = ""
+        if p and ((call and (p <= h["stop"] or p <= h["ema"])) or (not call and (p >= h["stop"] or p >= h["ema"]))):
+            risk = " ⚠️ gapping through its skip level, likely drops off"
+        move = f"pre ${p:.2f} ({h['gap']:+.1f}%)" if p else "no premarket trades yet"
+        lines.append(f"{'🟢' if call else '🔴'} {h['ticker']} ${h['close']:.2f} · {move} · skip if "
+                     f"{'below' if call else 'above'} ${h['stop']:.2f}{risk}"
+                     + (" ⚠️ earnings date unknown" if h.get("earnings_unknown") else ""))
+    mkt = " · ".join(futs + [vix_text])
+    title = f"☀️ Premarket {today:%a %b %d}: systems OK"
+    body = "\n".join([mkt, f"{len(cands):,} names trend-aligned at the last close. Likely list:"] + lines +
+                      (["Earnings soon, skipped: " + ", ".join(skipped)] if skipped else []) +
+                      ([f"~1 contract over ${C.MAX_TRADE_DOLLARS:,}, skipped: " + ", ".join(pricey)] if pricey else []) +
+                      [f"Final list with contracts and sizes at {C.TREND_SCAN_TIME_ET} ET."])
+    info.update(market=mkt, skipped_earnings=skipped, skipped_pricey=pricey,
+                picks=[{"ticker": h["ticker"], "direction": h["direction"], "price": round(h["close"], 2),
+                        "stop": round(h["stop"], 2), "premarket": round(h["premarket"], 2) if h["premarket"] else None,
+                        "day_chg": round(h["gap"], 2) if h["gap"] is not None else None} for h in picks])
+    if dry_run:
+        print(f"\n{title}\n{body}")
+        info["result"] = "dry run"
+        return picks
+    info["notified"] = notify(title, body, priority=3, tags=["sunrise"], click=C.DASHBOARD_URL or None)
+    info["result"] = "premarket sent"
+    return picks
+
+
 def close_reminder():
     return notify("⏰ Close today's trades",
            "Sell every option you opened today before 3:50. Holding overnight is where the big losses came from.",
@@ -607,8 +724,17 @@ def cloud():
              "run_url": run_url()}
     t0 = time.time()
     try:
+        slot = ("premarket" if "07:50" <= hm <= "08:35" else "watchlist" if "09:40" <= hm <= "10:30"
+                else "reminder" if "15:20" <= hm <= "15:55" else None)
+        if entry["trigger"] == "schedule" and slot and already_ran(slot, now.date()):
+            # a manual run (or an earlier late cron) already covered this slot today
+            entry.update(kind="skip", result=f"{slot} already sent today")
+            return
         if now.weekday() >= 5 and entry["trigger"] == "schedule":
             entry.update(kind="skip", result="weekend")
+        elif "07:50" <= hm <= "08:35" and C.PREMARKET_SCAN:   # 8:40 EST is the summer 9:40 cron
+            entry["kind"] = "premarket"
+            run_premarket(info=entry)
         elif "09:40" <= hm <= "10:30" or entry["trigger"] == "workflow_dispatch":
             entry["kind"] = "watchlist"
             run_trend_scan(info=entry)
@@ -628,6 +754,15 @@ def cloud():
     finally:
         entry["seconds"] = round(time.time() - t0)
         record_run(entry)
+
+
+def already_ran(kind, day):
+    try:
+        runs = json.loads(STATUS_FILE.read_text()).get("runs", [])
+    except Exception:
+        return False
+    return any(r.get("kind") == kind and r.get("result") != "failed" and r.get("time", "")[:10] == day.isoformat()
+               for r in runs)
 
 
 def run_url():
@@ -702,7 +837,7 @@ def tick():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "cloud", "trend", "swing", "intraday", "universe", "test-notify"])
+    ap.add_argument("cmd", choices=["run", "cloud", "premarket", "trend", "swing", "intraday", "universe", "test-notify"])
     ap.add_argument("--dry-run", action="store_true", help="print callouts instead of sending")
     a = ap.parse_args()
 
@@ -717,6 +852,8 @@ def main():
         tick()
     elif a.cmd == "cloud":
         cloud()
+    elif a.cmd == "premarket":
+        run_premarket(dry_run=a.dry_run)
     elif a.cmd == "trend":
         run_trend_scan(dry_run=a.dry_run)
     elif a.cmd == "universe":

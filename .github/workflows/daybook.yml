@@ -4,6 +4,8 @@ on:
   schedule:
     # GitHub cron is UTC. Each job is listed at both its EDT and EST time; scanner.py checks
     # Eastern time and only the run that lands in the right window does anything.
+    - cron: "5 12 * * 1-5"    # 8:05 ET premarket check, summer (EDT)
+    - cron: "5 13 * * 1-5"    # 8:05 ET premarket check, winter (EST)
     - cron: "40 13 * * 1-5"   # 9:40 ET in summer (EDT)
     - cron: "40 14 * * 1-5"   # 9:40 ET in winter (EST)
     - cron: "25 19 * * 1-5"   # 3:25 ET close reminder, summer

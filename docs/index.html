@@ -84,7 +84,7 @@ h2 .meta { font-weight: 400; color: var(--text-muted); font-size: 13px; }
 .note { color: var(--text-muted); font-size: 13px; margin: 10px 0 0; }
 .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 4px 16px; overflow-x: auto; }
 .empty { background: var(--surface-1); border: 1px dashed var(--border); border-radius: 12px; padding: 24px; color: var(--text-secondary); text-align: center; }
-.day { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.day { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .step { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
 .step .t { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .step .s { font-weight: 600; margin-top: 2px; }
@@ -98,7 +98,8 @@ td.r, th.r { text-align: right; }
 footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 @media (max-width: 680px) {
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .picks, .day { grid-template-columns: 1fr; }
+  .picks { grid-template-columns: 1fr; }
+  .day { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hide-sm { display: none; }
 }
 </style>
@@ -136,7 +137,7 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 
 <script>
 const TZ = "America/New_York";
-const SLOTS = [{ hm: [9, 40], kind: "watchlist", label: "Watchlist" }, { hm: [15, 25], kind: "reminder", label: "Close reminder" }];
+const SLOTS = [{ hm: [8, 5], kind: "premarket", label: "Premarket check" }, { hm: [9, 40], kind: "watchlist", label: "Watchlist" }, { hm: [15, 25], kind: "reminder", label: "Close reminder" }];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -273,7 +274,7 @@ function render(status) {
     <thead><tr><th>When (ET)</th><th>Run</th><th>Result</th><th class="r">Picks</th><th class="r">Push</th><th class="r hide-sm">Time</th><th class="hide-sm"></th></tr></thead>
     <tbody>${okRuns.slice(0, 40).map(r => `<tr>
       <td>${fmtDay(r.at)} ${fmtTime(r.at)}</td>
-      <td>${esc(r.kind === "watchlist" ? "Watchlist" : r.kind === "reminder" ? "Close reminder" : r.kind)}${r.trigger === "workflow_dispatch" ? ' <span class="muted">(manual)</span>' : ""}</td>
+      <td>${esc({ watchlist: "Watchlist", reminder: "Close reminder", premarket: "Premarket check" }[r.kind] || r.kind)}${r.trigger === "workflow_dispatch" ? ' <span class="muted">(manual)</span>' : ""}</td>
       <td class="${r.result === "failed" ? "neg" : ""}" title="${esc(r.error || "")}">${esc(r.result === "failed" ? "✗ " + (r.error || "failed").slice(0, 60) : r.result)}</td>
       <td class="r">${r.picks ? r.picks.length : "—"}</td>
       <td class="r ${r.notified === false ? "neg" : ""}">${"notified" in r ? (r.notified ? "✓" : "✗") : "—"}</td>

@@ -1,6 +1,129 @@
 {
  "runs": [
   {
+   "time": "2026-10-26T09:52:14-04:00",
+   "trigger": "workflow_dispatch",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40334353930",
+   "kind": "watchlist",
+   "universe": 2097,
+   "downloaded": 2097,
+   "session": "2026-10-26",
+   "vix": 18.6,
+   "vix_text": "VIX 18.6 (normal)",
+   "aligned": 1284,
+   "skipped_earnings": [
+    "AAPL (Nov 02)",
+    "SNDK (Oct 29)",
+    "INTC (Oct 29)",
+    "GOOGL (Oct 28)",
+    "GOOG (Oct 28)",
+    "STX (Oct 27)",
+    "LLY (Oct 29)"
+   ],
+   "skipped_pricey": [
+    "MU",
+    "META",
+    "AMD",
+    "LITE",
+    "DELL",
+    "BE",
+    "WDC"
+   ],
+   "picks": [
+    {
+     "ticker": "NVDA",
+     "direction": "PUTS",
+     "price": 215.18,
+     "stop": 230.55,
+     "day_chg": 2.0,
+     "contract": "Oct 30 $215P (4 DTE) 3.75/3.85, OI 9,969, IV 37%",
+     "target": "+3% target: option ~$3.91 \u2248 stock $214.98",
+     "qty": 2,
+     "size": "max 2 contracts ($770)"
+    },
+    {
+     "ticker": "SPCX",
+     "direction": "PUTS",
+     "price": 145.22,
+     "stop": 165.95,
+     "day_chg": -1.54,
+     "contract": "Oct 30 $145P (4 DTE) 2.93/2.96, OI 8,201, IV 41%",
+     "target": "+3% target: option ~$3.03 \u2248 stock $145.07",
+     "qty": 3,
+     "size": "max 3 contracts ($888)"
+    },
+    {
+     "ticker": "AVGO",
+     "direction": "PUTS",
+     "price": 326.41,
+     "stop": 357.52,
+     "day_chg": 1.47,
+     "contract": "Oct 30 $327.5P (4 DTE) 7.50/7.85, OI 669, IV 46%",
+     "target": "+3% target: option ~$7.91 \u2248 stock $326.02",
+     "qty": 1,
+     "size": "max 1 contract ($785)"
+    },
+    {
+     "ticker": "TSM",
+     "direction": "PUTS",
+     "price": 422.17,
+     "stop": 456.0,
+     "day_chg": 0.87,
+     "contract": "Oct 30 $422.5P (4 DTE) 7.45/8.10, OI 515, IV 38%",
+     "target": "+3% target: option ~$8.01 \u2248 stock $421.76",
+     "qty": 1,
+     "size": "max 1 contract ($810)"
+    },
+    {
+     "ticker": "MRVL",
+     "direction": "PUTS",
+     "price": 229.14,
+     "stop": 276.44,
+     "day_chg": 0.28,
+     "contract": "Oct 30 $230P (4 DTE) 8.40/8.65, OI 1,784, IV 67%",
+     "target": "+3% target: option ~$8.78 \u2248 stock $228.74",
+     "qty": 1,
+     "size": "max 1 contract ($865)"
+    },
+    {
+     "ticker": "ORCL",
+     "direction": "PUTS",
+     "price": 125.07,
+     "stop": 145.17,
+     "day_chg": -0.86,
+     "contract": "Oct 30 $125P (4 DTE) 4.55/4.65, OI 7,857, IV 77%",
+     "target": "+3% target: option ~$4.74 \u2248 stock $124.83",
+     "qty": 2,
+     "size": "max 2 contracts ($930)"
+    },
+    {
+     "ticker": "NBIS",
+     "direction": "PUTS",
+     "price": 152.21,
+     "stop": 205.1,
+     "day_chg": -4.12,
+     "contract": "Oct 30 $152.5P (4 DTE) 7.90/8.00, OI 498, IV 101%",
+     "target": "+3% target: option ~$8.19 \u2248 stock $151.80",
+     "qty": 1,
+     "size": "max 1 contract ($800)"
+    },
+    {
+     "ticker": "NFLX",
+     "direction": "PUTS",
+     "price": 65.28,
+     "stop": 72.51,
+     "day_chg": -0.86,
+     "contract": "Oct 30 $65P (4 DTE) 0.94/1.00, OI 12,227, IV 35%",
+     "target": "+3% target: option ~$1.00 \u2248 stock $65.23",
+     "qty": 10,
+     "size": "max 10 contracts ($1,000)"
+    }
+   ],
+   "notified": true,
+   "result": "watchlist sent",
+   "seconds": 266
+  },
+  {
    "time": "2026-10-25T22:53:36-04:00",
    "trigger": "workflow_dispatch",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40261311151",
@@ -46,7 +169,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-10-25T22:53:36-04:00",
+ "last_checked": "2026-10-26T09:52:14-04:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

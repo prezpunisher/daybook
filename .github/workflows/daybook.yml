@@ -28,12 +28,19 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+      - name: Reuse the stock list (rebuilt weekly)
+        uses: actions/cache@v4
+        with:
+          path: data/universe.json
+          key: universe-${{ github.run_id }}
+          restore-keys: universe-
       - name: Run scanner
         id: scan
         continue-on-error: true      # still save the failure to the dashboard
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           MAC_NOTIFICATIONS: "0"
+          UNIVERSE_MAX_AGE_HOURS: "168"
         run: python -W ignore scanner.py cloud
       - name: Save run to dashboard
         run: |

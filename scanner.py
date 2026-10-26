@@ -134,7 +134,7 @@ def build_universe():
     return universe
 
 
-def get_universe(max_age_hours=20):
+def get_universe(max_age_hours=float(os.environ.get("UNIVERSE_MAX_AGE_HOURS", 20))):
     if UNIVERSE_FILE.exists():
         u = json.loads(UNIVERSE_FILE.read_text())
         age = datetime.now(ET) - datetime.fromisoformat(u["built"])

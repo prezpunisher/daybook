@@ -13,6 +13,7 @@ The pattern: trade with the daily trend, weekly options, same day, small size.
   Names reporting earnings within 7 days, and names where one contract costs more than the limit, are skipped.
   The suggested contract must also average 500+ contracts a day over the last 5 sessions
   (`MIN_OPTION_AVG_VOLUME`), so it's easy to get in and out. SPY, QQQ and IWM are always checked first.
+  SpaceX (SPCX), Tesla and Tesla ETFs are never suggested (`EXCLUDE` in config.py).
 - **2:25 CT:** a reminder to close every option opened that day, plus a scorecard of the morning's alerts
   (option volume at the alert, and when each option first hit +3%, +5% or −20%). Also on the dashboard.
 

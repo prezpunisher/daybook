@@ -151,7 +151,7 @@ def get_universe(max_age_hours=float(os.environ.get("UNIVERSE_MAX_AGE_HOURS", 20
 
 
 def with_etfs(universe):
-    return [{"ticker": t} for t in C.ETFS] + [u for u in universe if u["ticker"] not in C.ETFS]
+    return [{"ticker": t} for t in C.ETFS] + [u for u in universe if u["ticker"] not in C.ETFS and u["ticker"] not in C.EXCLUDE]
 
 
 def get_vix():

@@ -23,6 +23,8 @@ EARNINGS_BUFFER_DAYS = 7          # skip names reporting earnings within this ma
 WEEKLY_MIN_DTE = 2                # this Friday's expiry, or next Friday's on Thu/Fri
 MIN_OPTION_AVG_VOLUME = 500       # the suggested contract must average this many contracts/day (last 5 sessions)
 ETFS = ["SPY", "QQQ", "IWM"]      # always checked first (the screener only lists stocks); no earnings
+# never suggested: SpaceX, Tesla and the single-stock Tesla ETFs
+EXCLUDE = {"SPCX", "TSLA", "TSLL", "TSLQ", "TSLZ", "TSLT", "TSLS", "TSLR", "TSDD", "TSLG", "TSLY"}
 MAX_NAMES_CHECKED = 40            # most liquid aligned names to check before giving up on filling the list
 
 # ---------- Legacy RSI strategy (STRATEGY = "rsi") ----------

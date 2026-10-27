@@ -250,7 +250,7 @@ function render(status) {
       return `<a class="pick" href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(x.ticker)}" target="_blank" rel="noopener">
         <div class="top"><span class="badge ${call ? "calls" : "puts"}">${call ? "▲ CALLS" : "▼ PUTS"}</span>
           <span class="tk">${esc(x.ticker)}</span><span class="px">$${Number(x.price).toFixed(2)}</span>${chg}</div>
-        <div class="ct">${esc(x.contract)}${x.opt_avg_vol != null ? ` · vol ${x.opt_avg_vol.toLocaleString()}/day, ${x.opt_vol_today.toLocaleString()} today` : ""}</div>
+        <div class="ct">${esc(x.contract)}${x.opt_avg_vol != null ? ` · vol ${x.opt_avg_vol.toLocaleString()}/day` : ""}</div>
         <div class="row"><span><b>${esc(x.size)}</b></span><span>skip if ${call ? "below" : "above"} <b>$${Number(x.stop).toFixed(2)}</b></span></div>
       </a>`;
     }).join("")}</div>` : `<div class="empty">${wl.result === "market closed" ? "Market was closed. Nothing sent." : "No names lined up with their trend. Sitting out is a trade too."}</div>`;

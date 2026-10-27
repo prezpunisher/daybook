@@ -146,8 +146,12 @@ def get_universe(max_age_hours=float(os.environ.get("UNIVERSE_MAX_AGE_HOURS", 20
         u = json.loads(UNIVERSE_FILE.read_text())
         age = datetime.now(ET) - datetime.fromisoformat(u["built"])
         if age < timedelta(hours=max_age_hours):
-            return u["tickers"]
-    return build_universe()
+            return with_etfs(u["tickers"])
+    return with_etfs(build_universe())
+
+
+def with_etfs(universe):
+    return [{"ticker": t} for t in C.ETFS] + [u for u in universe if u["ticker"] not in C.ETFS]
 
 
 def get_vix():
@@ -344,6 +348,8 @@ def _suggest_contract(ticker, direction, price, target_dte, min_dte):
 def earnings_soon(ticker):
     """Next earnings date if within EARNINGS_BUFFER_DAYS, None if not, "unknown" if Yahoo won't say.
     A throttled Yahoo can return an empty calendar instead of an error, so empty counts as a miss."""
+    if ticker in C.ETFS:
+        return None
     for attempt in range(5):
         try:
             cal = yf.Ticker(ticker).calendar or {}
@@ -364,7 +370,7 @@ def earnings_soon(ticker):
 
 
 def option_volume(symbol):
-    """(average daily contracts over the last 5 completed sessions, contracts traded so far today).
+    """Average daily contracts traded over the last 5 completed sessions (None if Yahoo won't say).
     Days Yahoo reports as 0 are gaps in its data, not real zero days, so they're left out of the average."""
     for attempt in range(4):
         try:
@@ -373,15 +379,12 @@ def option_volume(symbol):
         except yf.exceptions.YFRateLimitError:
             time.sleep(5 * 2 ** attempt)
         except Exception:
-            return None, None
+            return None
     else:
-        return None, None
-    if h.empty:
-        return 0, 0
-    today = datetime.now(ET).date()
-    done = h[h.index.date < today]["Volume"]
-    done = done[done > 0].tail(5)
-    return (int(done.mean()) if len(done) else 0), int(h[h.index.date == today]["Volume"].sum())
+        return None
+    done = h[h.index.date < datetime.now(ET).date()]["Volume"] if not h.empty else h
+    done = done[done > 0].tail(5) if len(done) else done
+    return int(done.mean()) if len(done) else 0
 
 
 def est_contract_cost(ticker_df, call, dte):
@@ -588,11 +591,11 @@ def run_trend_scan(dry_run=False, info=None):
             pricey.append(h["ticker"])
             continue
         # enough option trading to get in and out near the quote
-        avg_vol, vol_today = option_volume(h["symbol"]) if h["symbol"] else (None, None)
-        if avg_vol is None or avg_vol < C.MIN_OPTION_AVG_VOLUME or vol_today < C.MIN_OPTION_VOLUME_TODAY:
-            thin.append(h["ticker"] if avg_vol is None else f"{h['ticker']} ({avg_vol:,}/day, {vol_today:,} today)")
+        avg_vol = option_volume(h["symbol"]) if h["symbol"] else None
+        if avg_vol is None or avg_vol < C.MIN_OPTION_AVG_VOLUME:
+            thin.append(h["ticker"] if avg_vol is None else f"{h['ticker']} ({avg_vol:,}/day)")
             continue
-        h["opt_avg_vol"], h["opt_vol_today"] = avg_vol, vol_today
+        h["opt_avg_vol"] = avg_vol
         er = earnings_soon(h["ticker"])
         if er and er != "unknown":
             skipped.append(f"{h['ticker']} ({er:%b %d})")
@@ -605,13 +608,13 @@ def run_trend_scan(dry_run=False, info=None):
     info.update(aligned=len(cands), skipped_earnings=skipped, skipped_pricey=pricey, skipped_thin=thin,
                 picks=[{k: (round(v, 2) if isinstance(v, float) else v) for k, v in h.items()
                         if k in ("ticker", "direction", "price", "stop", "day_chg", "contract", "target", "qty", "size", "symbol", "mid",
-                                 "opt_avg_vol", "opt_vol_today")}
+                                 "opt_avg_vol")}
                        for h in picks])
     lines = []
     for h in picks:
         call = h["direction"] == "CALLS"
         lines.append(f"{'🟢' if call else '🔴'} {h['ticker']} ${h['price']:.2f} ({h['day_chg']:+.1f}% today)\n"
-                     f"   {h['contract']}\n   option vol {h['opt_avg_vol']:,}/day avg · {h['opt_vol_today']:,} today\n"
+                     f"   {h['contract']}\n   option vol {h['opt_avg_vol']:,}/day avg\n"
                      f"   {h['size']} · skip if {'below' if call else 'above'} ${h['stop']:.2f}"
                      + ("\n   ⚠️ earnings date unknown, check before trading" if h.get("earnings_unknown") else ""))
     stop = f", or at -{C.STOP_LOSS:.0%}" if C.STOP_LOSS else ""
@@ -623,8 +626,7 @@ def run_trend_scan(dry_run=False, info=None):
     if pricey:
         footer.append(f"1 contract over ${C.MAX_TRADE_DOLLARS:,}, skipped: " + ", ".join(pricey))
     if thin:
-        footer.append(f"Options too thin (under {C.MIN_OPTION_AVG_VOLUME:,}/day or {C.MIN_OPTION_VOLUME_TODAY:,} today), "
-                      "skipped: " + ", ".join(thin))
+        footer.append(f"Options too thin (under {C.MIN_OPTION_AVG_VOLUME:,}/day), skipped: " + ", ".join(thin))
     title = f"Trend watchlist {session:%a %b %d}: {len(picks)} names"
     body = "\n".join(lines + [rules] + footer) if picks else "No names line up with their trend today. Sitting out is a trade too.\n" + vix_text
 

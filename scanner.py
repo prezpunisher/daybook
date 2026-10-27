@@ -771,7 +771,8 @@ def close_reminder(info=None):
 
 def score_today():
     """For today's watchlist: option volume when the push went out, and when the option first traded
-    +3% / +5% / -20% from the first trade after the push. Times in CT. 1-minute option data from Yahoo."""
+    +3% / +5% / -20% from the first trade after the push. Also scored from the push minute's last print
+    ("at_alert"), the best case if the order goes in the moment the push lands. Times in CT."""
     try:
         runs = json.loads(STATUS_FILE.read_text()).get("runs", [])
     except Exception:
@@ -800,6 +801,8 @@ def score_today():
             continue
         entry = float(after["Open"].iloc[0])
         first = lambda m: m.index[0].strftime("%-I:%M") if len(m) else None
+        at = h[h.index == push_min]
+        at_entry = float(at["Close"].iloc[0]) if len(at) else entry
         out.append({"ticker": p["ticker"], "direction": p["direction"], "symbol": sym,
                     "alert": push.strftime("%-I:%M"), "quoted_mid": p.get("mid"),
                     "entry": round(entry, 2), "entry_time": after.index[0].strftime("%-I:%M"),
@@ -808,6 +811,9 @@ def score_today():
                     "hit3": first(after[after["High"] >= entry * 1.03]),
                     "hit5": first(after[after["High"] >= entry * 1.05]),
                     "hit20": first(after[after["Low"] <= entry * 0.80]),
+                    "at_alert_entry": round(at_entry, 2),
+                    "at_alert_hit3": first(after[after["High"] >= at_entry * 1.03]),
+                    "at_alert_hit20": first(after[after["Low"] <= at_entry * 0.80]),
                     "best": round(float(after["High"].max()) / entry - 1, 3),
                     "now": round(float(after["Close"].iloc[-1]) / entry - 1, 3)})
         time.sleep(1)

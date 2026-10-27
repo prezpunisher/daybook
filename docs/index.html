@@ -274,16 +274,17 @@ function render(status) {
     const t = (v, cls) => v ? `<span class="${cls}">${esc(v)}</span>` : `<span class="muted">—</span>`;
     $("scMeta").textContent = `${fmtDay(sc.at)} · alert ${rows[0].alert} CT · ${h3}/${n} hit +3% · ${h5}/${n} hit +5%`;
     $("scorecard").innerHTML = `<div class="card"><table>
-      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm">Best</th><th class="r hide-sm">At 2:25</th></tr></thead>
+      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm" title="Bought at the last print in the push minute instead">+3% if in at alert</th><th class="r hide-sm">Best</th><th class="r hide-sm">At 2:25</th></tr></thead>
       <tbody>${rows.map(r => `<tr>
         <td>${r.direction === "CALLS" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted hide-sm">${esc(r.symbol)}</span></td>
         <td class="r">${r.vol_alert_min.toLocaleString()}</td>
         <td class="r hide-sm">${r.vol_before_alert.toLocaleString()}</td>
         <td class="r">$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span></td>
         <td class="r">${t(r.hit3, "pos")}</td><td class="r">${t(r.hit5, "pos")}</td><td class="r">${t(r.hit20, "neg")}</td>
+        <td class="r hide-sm">${r.at_alert_entry != null ? `$${r.at_alert_entry.toFixed(2)} → ${t(r.at_alert_hit3, "pos")}` : ""}</td>
         <td class="r hide-sm">${pct(r.best)}</td><td class="r hide-sm">${pct(r.now)}</td>
       </tr>`).join("")}</tbody></table></div>
-      <p class="note">Bought = first option trade after the push. Vol = contracts traded in the alert minute / earlier today. Low volume means the +3% print may be one small trade.</p>`;
+      <p class="note">Bought = first option trade after the push. "If in at alert" = bought at the push minute's last print instead. Vol = contracts traded in the alert minute / earlier today. Low volume means the +3% print may be one small trade.</p>`;
   }
 
   // rules

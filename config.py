@@ -13,10 +13,11 @@ MIN_PRICE = 5.0                   # sub-$5 names usually have poor option chains
 # Backtests found no timing signal that beats a coin flip, so the bot sends a short morning watchlist
 # and enforces the rules that separated the wins from the losses, instead of "buy now" callouts.
 STRATEGY = "trend"                # "trend" = morning watchlist + close reminder; "rsi" = legacy RSI callouts
-PREMARKET_TIME_ET = "08:10"       # 7:10 CT
+PREMARKET_TIME_ET = "09:15"       # 8:15 CT, 15 min before the open
 PREMARKET_SCAN = True             # ~8:15 ET = 7:15 CT: system check + likely watchlist with premarket moves
 TREND_SCAN_TIME_ET = "09:45"      # 8:45 CT; after the opening swings settle
 CLOSE_REMINDER_ET = "15:30"       # 2:30 CT; "close every option you opened today" push; None to disable
+REVIEW_TIME_ET = "16:15"          # 3:15 CT: after the close, how each called trade did on the 1-min chart
 WATCHLIST_SIZE = 8
 MAX_TRADE_DOLLARS = 1_000         # max cost per trade; the alert sizes contracts to stay under it
 STOP_LOSS = 0.20                  # option stop-loss shown in alerts (e.g. 0.20 = -20%); None = manage it yourself

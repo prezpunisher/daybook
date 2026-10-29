@@ -754,28 +754,42 @@ def run_premarket(dry_run=False, info=None):
     return picks
 
 
-def close_reminder(info=None):
+def close_reminder():
+    return notify("⏰ Close today's trades",
+                  f"Sell every option you opened today before {ct('15:50')}. Holding overnight is where the big losses came from.",
+                  priority=4, tags=["alarm_clock"])
+
+
+WINDOWS = (5, 15, 30, 60)          # minutes after the push, for "best gain within"
+
+
+def day_review(info=None):
+    """After the close: how each of today's watchlist options did on the 1-minute chart, pushed and saved."""
     info = {} if info is None else info
-    try:
-        info["scorecard"] = score_today()
-    except Exception as e:                  # the reminder matters more than the scorecard
-        log.warning("scorecard failed: %s", e)
-        info["scorecard"] = []
-    body = f"Sell every option you opened today before {ct('15:50')}. Holding overnight is where the big losses came from."
-    sc = info["scorecard"]
-    if sc:
-        hit3, hit5 = sum(r["hit3"] is not None for r in sc), sum(r["hit5"] is not None for r in sc)
-        body += (f"\n\nToday's alerts, buying the first trade after the {sc[0]['alert']} push: "
-                 f"{hit3}/{len(sc)} reached +3%, {hit5}/{len(sc)} reached +5%")
-        body += "".join(f"\n{r['ticker']}: +3% {r['hit3'] or '—'} · +5% {r['hit5'] or '—'} · -20% {r['hit20'] or '—'}"
-                        for r in sc)
-    return notify("⏰ Close today's trades", body, priority=4, tags=["alarm_clock"], click=C.DASHBOARD_URL or None)
+    sc = info["scorecard"] = score_today()
+    if not sc:
+        info["result"] = "no watchlist today"
+        return None
+    info["result"] = "review sent"
+    n = len(sc)
+    wins = [r for r in sc if r["result"] > 0]
+    pnl = sum(r["pnl"] for r in sc)
+    by = {w: sum(r["best_in"][str(w)] >= C.TAKE_PROFIT for r in sc) for w in WINDOWS}
+    title = f"📊 Day review: {len(wins)}/{n} winners · {'+' if pnl >= 0 else '−'}${abs(pnl):,.0f}"
+    lines = []
+    for r in sc:
+        mins = lambda k: f"{r[k]}m" if r[k] is not None else "—"
+        mark = "✅" if r["result"] > 0 else "❌"
+        lines.append(f"{mark} {r['ticker']} {r['label']}: +3% in {mins('min3')} · +5% in {mins('min5')} · "
+                     f"best {r['best']:+.0%} · {'+' if r['pnl'] >= 0 else '−'}${abs(r['pnl']):,.0f}")
+    reach = " · ".join(f"{by[w]}/{n} by {w}m" for w in WINDOWS)
+    body = "\n".join(lines + ["", f"Up {C.TAKE_PROFIT:.0%}+: {reach}",
+                              f"Bought at the first trade after the {sc[0]['alert']} CT push, ${C.MAX_TRADE_DOLLARS:,} max each. "
+                              f"✅ = +{C.TAKE_PROFIT:.0%} came before −{C.STOP_LOSS:.0%}."])
+    return notify(title, body, priority=3, tags=["bar_chart"], click=C.DASHBOARD_URL or None)
 
 
 def score_today():
-    """For today's watchlist: option volume when the push went out, and when the option first traded
-    +3% / +5% / -20% from the first trade after the push. Also scored from the push minute's last print
-    ("at_alert"), the best case if the order goes in the moment the push lands. Times in CT."""
     try:
         runs = json.loads(STATUS_FILE.read_text()).get("runs", [])
     except Exception:
@@ -784,41 +798,70 @@ def score_today():
     w = next((r for r in runs if r.get("kind") == "watchlist" and r.get("picks") and r["time"][:10] == today), None)
     if not w:
         return []
-    push = (datetime.fromisoformat(w["time"]) + timedelta(seconds=w.get("seconds", 0))).astimezone(CT)
-    push_min = pd.Timestamp(push).floor("min")
+    push = datetime.fromisoformat(w["time"]) + timedelta(seconds=w.get("seconds", 0))
+    return score_picks(w["picks"], push)
+
+
+def score_picks(picks, push):
+    """For each pick: option volume when the push went out, and from the first trade after the push, how
+    many minutes until the option first traded +3% / +5% / +10% / -20%, the best gain within 5/15/30/60
+    minutes, and the result under the rules (+3% before -20%, else -20%, else sold at 3:50 ET).
+    Also scored from the push minute's last print ("at_alert"). Times in CT."""
+    push = pd.Timestamp(push).tz_convert(CT)
+    push_min = push.floor("min")
+    day = push.date()
     out = []
-    for p in w["picks"]:
+    for p in picks:
         sym = p.get("symbol")
         if not sym:
             continue
         try:
-            h = yf.Ticker(sym).history(period="1d", interval="1m")
+            h = yf.Ticker(sym).history(start=day, end=day + timedelta(days=1), interval="1m")
         except Exception as e:
             log.warning("score %s: %s", sym, e)
             continue
         if h.empty:
             continue
         h.index = h.index.tz_convert(CT)
+        h = h[h.index.strftime("%H:%M") <= "14:50"]
         sofar, after = h[h.index <= push_min], h[h.index > push_min]
         if after.empty:
             continue
         entry = float(after["Open"].iloc[0])
-        first = lambda m: m.index[0].strftime("%-I:%M") if len(m) else None
+        t0 = after.index[0]
+        first = lambda m: m.index[0] if len(m) else None
+        clock = lambda t: t.strftime("%-I:%M") if t is not None else None
+        mins = lambda t: int((t - t0).total_seconds() // 60) if t is not None else None
+        t3, t5 = first(after[after["High"] >= entry * 1.03]), first(after[after["High"] >= entry * 1.05])
+        t10, t20 = first(after[after["High"] >= entry * 1.10]), first(after[after["Low"] <= entry * 0.80])
+        tp, sl = C.TAKE_PROFIT, C.STOP_LOSS
+        ttp = first(after[after["High"] >= entry * (1 + tp)])
+        if ttp is not None and (t20 is None or ttp < t20):
+            ret = tp
+        elif t20 is not None:
+            ret = -sl
+        else:
+            ret = float(after["Close"].iloc[-1]) / entry - 1
+        qty = max(int(C.MAX_TRADE_DOLLARS // (entry * 100)), 1)
         at = h[h.index == push_min]
         at_entry = float(at["Close"].iloc[0]) if len(at) else entry
+        m = re.match(r"^[A-Z.]+?\d{6}([CP])(\d{8})$", sym)
         out.append({"ticker": p["ticker"], "direction": p["direction"], "symbol": sym,
+                    "label": f"{float(m.group(2)) / 1000:g}{m.group(1)}" if m else "",
                     "alert": push.strftime("%-I:%M"), "quoted_mid": p.get("mid"),
-                    "entry": round(entry, 2), "entry_time": after.index[0].strftime("%-I:%M"),
+                    "entry": round(entry, 2), "entry_time": clock(t0), "qty": qty,
                     "vol_alert_min": int(sofar["Volume"].iloc[-1]) if len(sofar) else 0,
                     "vol_before_alert": int(sofar["Volume"].sum()),
-                    "hit3": first(after[after["High"] >= entry * 1.03]),
-                    "hit5": first(after[after["High"] >= entry * 1.05]),
-                    "hit20": first(after[after["Low"] <= entry * 0.80]),
+                    "hit3": clock(t3), "hit5": clock(t5), "hit10": clock(t10), "hit20": clock(t20),
+                    "min3": mins(t3), "min5": mins(t5), "min10": mins(t10), "min20": mins(t20),
+                    "best_in": {str(w): round(float(after[after.index <= t0 + timedelta(minutes=w)]["High"].max()) / entry - 1, 3)
+                                for w in WINDOWS},
                     "at_alert_entry": round(at_entry, 2),
-                    "at_alert_hit3": first(after[after["High"] >= at_entry * 1.03]),
-                    "at_alert_hit20": first(after[after["Low"] <= at_entry * 0.80]),
+                    "at_alert_hit3": clock(first(after[after["High"] >= at_entry * 1.03])),
+                    "at_alert_hit20": clock(first(after[after["Low"] <= at_entry * 0.80])),
                     "best": round(float(after["High"].max()) / entry - 1, 3),
-                    "now": round(float(after["Close"].iloc[-1]) / entry - 1, 3)})
+                    "now": round(float(after["Close"].iloc[-1]) / entry - 1, 3),
+                    "result": round(ret, 3), "pnl": round(ret * qty * entry * 100)})
         time.sleep(1)
     return out
 
@@ -843,9 +886,10 @@ def cloud():
                 run_premarket(info=entry)
             elif forced == "watchlist":
                 run_trend_scan(info=entry)
+            elif forced == "review":
+                entry["notified"] = day_review(info=entry)
             else:
-                entry.update(result="reminder sent")
-                entry["notified"] = close_reminder(info=entry)
+                entry.update(result="reminder sent", notified=close_reminder())
             return
         slot = ("premarket" if "07:50" <= hm <= "08:35" else "watchlist" if "09:40" <= hm <= "10:30"
                 else "reminder" if "15:20" <= hm <= "15:55" else None)
@@ -865,8 +909,7 @@ def cloud():
                 entry["notified"] = notify("✅ Daybook test run OK",
                                            "Cloud run worked. Market is closed, so no watchlist this time.", priority=3)
         elif "15:20" <= hm <= "15:55" and C.CLOSE_REMINDER_ET:
-            entry.update(kind="reminder", result="reminder sent")
-            entry["notified"] = close_reminder(info=entry)
+            entry.update(kind="reminder", result="reminder sent", notified=close_reminder())
         else:
             # the duplicate DST cron: expected, harmless
             entry.update(kind="skip", result=f"{ct(hm)} is outside the run windows")
@@ -884,7 +927,8 @@ def wait_for_slot(max_wait=5 * 3600 + 15 * 60, grace=20 * 60):
     """Keeper loop: sleep until the next run time (weekdays, ET) if it's within max_wait, then report which
     one it is. GitHub's own cron can start hours late; this runs within about a minute of the time.
     Writes slot=<premarket|watchlist|reminder|none> to GITHUB_OUTPUT."""
-    times = [("premarket", C.PREMARKET_TIME_ET), ("watchlist", C.TREND_SCAN_TIME_ET), ("reminder", C.CLOSE_REMINDER_ET)]
+    times = [("premarket", C.PREMARKET_TIME_ET), ("watchlist", C.TREND_SCAN_TIME_ET), ("reminder", C.CLOSE_REMINDER_ET),
+             ("review", C.REVIEW_TIME_ET)]
     now = datetime.now(ET)
     due = []
     for i in range(5):

@@ -6,7 +6,7 @@ phone (ntfy) and Mac. It only sends alerts and never places trades.
 ## Default: trend watchlist (`STRATEGY = "trend"` in config.py)
 The pattern: trade with the daily trend, weekly options, same day, small size.
 
-- **7:10 CT:** premarket check with futures, VIX and the likely list.
+- **8:15 CT:** premarket check with futures, VIX and the likely list.
 - **8:45 CT:** one push listing up to 8 of the most liquid names whose EMA45, MACD and Supertrend all
   agreed at yesterday's close and that are still on the trend side this morning. Each line has a
   weekly ATM contract and how many contracts fit under `MAX_TRADE_DOLLARS` ($1,000 by default).
@@ -14,8 +14,10 @@ The pattern: trade with the daily trend, weekly options, same day, small size.
   The suggested contract must also average 500+ contracts a day over the last 5 sessions
   (`MIN_OPTION_AVG_VOLUME`), so it's easy to get in and out. SPY, QQQ and IWM are always checked first.
   SpaceX (SPCX), Tesla and Tesla ETFs are never suggested (`EXCLUDE` in config.py).
-- **2:30 CT:** a reminder to close every option opened that day, plus a scorecard of the morning's alerts
-  (option volume at the alert, and when each option first hit +3%, +5% or −20%). Also on the dashboard.
+- **2:30 CT:** a reminder to close every option opened that day. The scorecard
+  is no longer attached; it moved to the day review.
+- **3:15 CT:** day review from the 1-minute option chart: minutes until each called option first hit +3% / +5%,
+  best gain within 5/15/30/60 min, and the result under the rules. Also on the dashboard.
 
 GitHub's built-in cron can start hours late, so a "keeper" workflow run sleeps until each run time,
 runs it, and starts the next keeper; a 3-hourly cron only restarts the loop if it ever stops.

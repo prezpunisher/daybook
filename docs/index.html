@@ -140,7 +140,7 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 
 <script>
 const TZ = "America/Chicago";               // everything shown in Central
-const SLOTS = [{ hm: [7, 10], kind: "premarket", label: "Premarket check" }, { hm: [8, 45], kind: "watchlist", label: "Watchlist" }, { hm: [14, 30], kind: "reminder", label: "Close reminder" }];
+const SLOTS = [{ hm: [8, 15], kind: "premarket", label: "Premarket check" }, { hm: [8, 45], kind: "watchlist", label: "Watchlist" }, { hm: [14, 30], kind: "reminder", label: "Close reminder" }, { hm: [15, 15], kind: "review", label: "Day review" }];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -263,10 +263,10 @@ function render(status) {
   }
 
   // scorecard: written by the afternoon reminder run, option level, times in CT
-  const sc = runs.find(r => r.kind === "reminder" && r.scorecard && r.scorecard.length);
+  const sc = runs.find(r => (r.kind === "review" || r.kind === "reminder") && r.scorecard && r.scorecard.length);
   if (!sc) {
     $("scMeta").textContent = "";
-    $("scorecard").innerHTML = `<div class="empty">After the 2:30 CT run, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5% or −20%.</div>`;
+    $("scorecard").innerHTML = `<div class="empty">After the 3:15 CT day review, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5% or −20%.</div>`;
   } else {
     const rows = sc.scorecard, n = rows.length;
     const h3 = rows.filter(r => r.hit3).length, h5 = rows.filter(r => r.hit5).length;
@@ -274,13 +274,13 @@ function render(status) {
     const t = (v, cls) => v ? `<span class="${cls}">${esc(v)}</span>` : `<span class="muted">—</span>`;
     $("scMeta").textContent = `${fmtDay(sc.at)} · alert ${rows[0].alert} CT · ${h3}/${n} hit +3% · ${h5}/${n} hit +5%`;
     $("scorecard").innerHTML = `<div class="card"><table>
-      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm" title="Bought at the last print in the push minute instead">+3% if in at alert</th><th class="r hide-sm">Best</th><th class="r hide-sm">At 2:30</th></tr></thead>
+      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm" title="Bought at the last print in the push minute instead">+3% if in at alert</th><th class="r hide-sm">Best</th><th class="r hide-sm">At close</th></tr></thead>
       <tbody>${rows.map(r => `<tr>
         <td>${r.direction === "CALLS" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted hide-sm">${esc(r.symbol)}</span></td>
         <td class="r">${r.vol_alert_min.toLocaleString()}</td>
         <td class="r hide-sm">${r.vol_before_alert.toLocaleString()}</td>
         <td class="r">$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span></td>
-        <td class="r">${t(r.hit3, "pos")}</td><td class="r">${t(r.hit5, "pos")}</td><td class="r">${t(r.hit20, "neg")}</td>
+        <td class="r">${t(r.hit3 && (r.min3 != null ? `${r.hit3} (${r.min3}m)` : r.hit3), "pos")}</td><td class="r">${t(r.hit5 && (r.min5 != null ? `${r.hit5} (${r.min5}m)` : r.hit5), "pos")}</td><td class="r">${t(r.hit20, "neg")}</td>
         <td class="r hide-sm">${r.at_alert_entry != null ? `$${r.at_alert_entry.toFixed(2)} → ${t(r.at_alert_hit3, "pos")}` : ""}</td>
         <td class="r hide-sm">${pct(r.best)}</td><td class="r hide-sm">${pct(r.now)}</td>
       </tr>`).join("")}</tbody></table></div>
@@ -303,7 +303,7 @@ function render(status) {
     <thead><tr><th>When (CT)</th><th>Run</th><th>Result</th><th class="r">Picks</th><th class="r">Push</th><th class="r hide-sm">Time</th><th class="hide-sm"></th></tr></thead>
     <tbody>${okRuns.slice(0, 40).map(r => `<tr>
       <td>${fmtDay(r.at)} ${fmtTime(r.at)}</td>
-      <td>${esc({ watchlist: "Watchlist", reminder: "Close reminder", premarket: "Premarket check" }[r.kind] || r.kind)}${r.trigger === "workflow_dispatch" ? ' <span class="muted">(manual)</span>' : ""}</td>
+      <td>${esc({ watchlist: "Watchlist", reminder: "Close reminder", premarket: "Premarket check", review: "Day review" }[r.kind] || r.kind)}${r.trigger === "workflow_dispatch" ? ' <span class="muted">(manual)</span>' : ""}</td>
       <td class="${r.result === "failed" ? "neg" : ""}" title="${esc(r.error || "")}">${esc(r.result === "failed" ? "✗ " + (r.error || "failed").slice(0, 60) : r.result)}</td>
       <td class="r">${r.picks ? r.picks.length : "—"}</td>
       <td class="r ${r.notified === false ? "neg" : ""}">${"notified" in r ? (r.notified ? "✓" : "✗") : "—"}</td>

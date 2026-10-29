@@ -140,7 +140,7 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 
 <script>
 const TZ = "America/Chicago";               // everything shown in Central
-const SLOTS = [{ hm: [7, 5], kind: "premarket", label: "Premarket check" }, { hm: [8, 40], kind: "watchlist", label: "Watchlist" }, { hm: [14, 25], kind: "reminder", label: "Close reminder" }];
+const SLOTS = [{ hm: [7, 10], kind: "premarket", label: "Premarket check" }, { hm: [8, 45], kind: "watchlist", label: "Watchlist" }, { hm: [14, 30], kind: "reminder", label: "Close reminder" }];
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -239,7 +239,7 @@ function render(status) {
   // watchlist
   if (!wl) {
     $("wlMeta").textContent = "";
-    $("watchlist").innerHTML = `<div class="empty">No watchlist yet. The first one arrives ${next ? fmtDay(next.at) + " at 8:40 CT" : "on the next trading day"}${links ? ', or press <b>Run now</b> during market hours' : ""}.</div>`;
+    $("watchlist").innerHTML = `<div class="empty">No watchlist yet. The first one arrives ${next ? fmtDay(next.at) + " at 8:45 CT" : "on the next trading day"}${links ? ', or press <b>Run now</b> during market hours' : ""}.</div>`;
   } else {
     const p = wl.picks || [];
     $("wlMeta").textContent = `${fmtDay(wl.at)} ${fmtTime(wl.at)} CT` +
@@ -266,7 +266,7 @@ function render(status) {
   const sc = runs.find(r => r.kind === "reminder" && r.scorecard && r.scorecard.length);
   if (!sc) {
     $("scMeta").textContent = "";
-    $("scorecard").innerHTML = `<div class="empty">After the 2:25 CT run, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5% or −20%.</div>`;
+    $("scorecard").innerHTML = `<div class="empty">After the 2:30 CT run, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5% or −20%.</div>`;
   } else {
     const rows = sc.scorecard, n = rows.length;
     const h3 = rows.filter(r => r.hit3).length, h5 = rows.filter(r => r.hit5).length;
@@ -274,7 +274,7 @@ function render(status) {
     const t = (v, cls) => v ? `<span class="${cls}">${esc(v)}</span>` : `<span class="muted">—</span>`;
     $("scMeta").textContent = `${fmtDay(sc.at)} · alert ${rows[0].alert} CT · ${h3}/${n} hit +3% · ${h5}/${n} hit +5%`;
     $("scorecard").innerHTML = `<div class="card"><table>
-      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm" title="Bought at the last print in the push minute instead">+3% if in at alert</th><th class="r hide-sm">Best</th><th class="r hide-sm">At 2:25</th></tr></thead>
+      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm" title="Bought at the last print in the push minute instead">+3% if in at alert</th><th class="r hide-sm">Best</th><th class="r hide-sm">At 2:30</th></tr></thead>
       <tbody>${rows.map(r => `<tr>
         <td>${r.direction === "CALLS" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted hide-sm">${esc(r.symbol)}</span></td>
         <td class="r">${r.vol_alert_min.toLocaleString()}</td>

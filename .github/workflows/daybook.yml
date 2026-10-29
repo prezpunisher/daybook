@@ -1,28 +1,48 @@
 name: Daybook
+run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.keeper && 'Daybook keeper' || 'Daybook' }}
 
+# GitHub's own cron can start hours late, so it no longer runs scans. A "keeper" run sleeps until the
+# next run time (7:10 / 8:45 / 2:30 CT), runs it, then starts the next keeper. The crons below are only
+# a watchdog: if no keeper is running or queued, they start one.
 on:
   schedule:
-    # GitHub cron is UTC. Each job is listed at both its EDT and EST time; scanner.py checks
-    # Eastern time and only the run that lands in the right window does anything.
-    - cron: "5 12 * * 1-5"    # 8:05 ET premarket check, summer (EDT)
-    - cron: "5 13 * * 1-5"    # 8:05 ET premarket check, winter (EST)
-    - cron: "40 13 * * 1-5"   # 9:40 ET in summer (EDT)
-    - cron: "40 14 * * 1-5"   # 9:40 ET in winter (EST)
-    - cron: "25 19 * * 1-5"   # 3:25 ET close reminder, summer
-    - cron: "25 20 * * 1-5"   # 3:25 ET close reminder, winter
-  workflow_dispatch:          # "Run workflow" button: builds a watchlist now
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+    inputs:
+      keeper:
+        description: "Internal: start the self-scheduling loop instead of running a watchlist now"
+        type: boolean
+        default: false
 
-concurrency: daybook          # never two runs at once (they share docs/status.json)
+concurrency:
+  group: daybook-${{ github.event_name == 'workflow_dispatch' && inputs.keeper && 'keeper' || github.event_name }}
 
 permissions:
   contents: write             # commit docs/status.json
   pages: write                # publish the dashboard
   id-token: write
+  actions: write              # the keeper starts the next keeper
 
 jobs:
-  scan:
+  watchdog:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    steps:
+      - name: Start a keeper if none is alive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          alive=$(gh run list -R "$GITHUB_REPOSITORY" -w daybook.yml -L 50 --json displayTitle,status \
+            -q '[.[] | select(.displayTitle == "Daybook keeper" and .status != "completed")] | length')
+          echo "keepers alive: $alive"
+          if [ "$alive" = "0" ]; then gh workflow run daybook.yml -R "$GITHUB_REPOSITORY" -f keeper=true; fi
+
+  scan:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    outputs:
+      ran: ${{ steps.scan.outcome != 'skipped' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -36,31 +56,47 @@ jobs:
           path: data/universe.json
           key: universe-${{ github.run_id }}
           restore-keys: universe-
+      - name: Wait for the next run time
+        id: wait
+        if: inputs.keeper
+        run: python -W ignore scanner.py wait
+      - name: Get the latest dashboard data
+        if: inputs.keeper && steps.wait.outputs.slot != 'none'
+        run: git pull --rebase -q
       - name: Run scanner
         id: scan
+        if: ${{ !inputs.keeper || steps.wait.outputs.slot != 'none' }}
         continue-on-error: true      # still save the failure to the dashboard
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           MAC_NOTIFICATIONS: "0"
           UNIVERSE_MAX_AGE_HOURS: "168"
           DASHBOARD_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          DAYBOOK_SLOT: ${{ steps.wait.outputs.slot }}
         run: python -W ignore scanner.py cloud
       - name: Save run to dashboard
+        if: steps.scan.outcome != 'skipped'
         run: |
           git config user.name "scanner-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/status.json
-          git diff --cached --quiet || (git commit -m "status: $(date -u +%FT%TZ)" && git push)
+          git diff --cached --quiet || (git commit -m "status: $(date -u +%FT%TZ)" && git pull --rebase -q && git push)
       - uses: actions/upload-pages-artifact@v3
+        if: steps.scan.outcome != 'skipped'
         with:
           path: docs
+      - name: Start the next keeper
+        if: always() && inputs.keeper
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run daybook.yml -R "$GITHUB_REPOSITORY" -f keeper=true
       - name: Fail the job if the scan failed
         if: steps.scan.outcome == 'failure'
         run: exit 1
 
   dashboard:
     needs: scan
-    if: always()
+    if: always() && needs.scan.outputs.ran == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true          # dashboard hiccups never mark the scan as failed
     environment:

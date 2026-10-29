@@ -19,6 +19,7 @@ import json
 import logging
 import math
 import os
+import re
 import subprocess
 import sys
 import time
@@ -603,6 +604,7 @@ def run_trend_scan(dry_run=False, info=None):
         h["earnings_unknown"] = er == "unknown"
         h["size"] = f"max {h['qty']} contract{'s' if h['qty'] != 1 else ''} (${h['qty'] * ask * 100:,.0f})"
         h["mid"] = round((ask + float(h["contract"].split(" at ")[0].split()[-1].split("/")[0])) / 2, 2)
+        h["ask"] = ask
         picks.append(h)
 
     info.update(aligned=len(cands), skipped_earnings=skipped, skipped_pricey=pricey, skipped_thin=thin,
@@ -610,25 +612,15 @@ def run_trend_scan(dry_run=False, info=None):
                         if k in ("ticker", "direction", "price", "stop", "day_chg", "contract", "target", "qty", "size", "symbol", "mid",
                                  "opt_avg_vol")}
                        for h in picks])
-    lines = []
-    for h in picks:
-        call = h["direction"] == "CALLS"
-        lines.append(f"{'🟢' if call else '🔴'} {h['ticker']} ${h['price']:.2f} ({h['day_chg']:+.1f}% today)\n"
-                     f"   {h['contract']}\n   option vol {h['opt_avg_vol']:,}/day avg\n"
-                     f"   {h['size']} · skip if {'below' if call else 'above'} ${h['stop']:.2f}"
-                     + ("\n   ⚠️ earnings date unknown, check before trading" if h.get("earnings_unknown") else ""))
-    stop = f", or at -{C.STOP_LOSS:.0%}" if C.STOP_LOSS else ""
-    rules = (f"Rules: in and out today · sell the option at +{C.TAKE_PROFIT:.0%} or more{stop} · "
-             f"max ${C.MAX_TRADE_DOLLARS:,} per trade · only the direction shown")
-    footer = [vix_text]
-    if skipped:
-        footer.append("Earnings soon, skipped: " + ", ".join(skipped))
-    if pricey:
-        footer.append(f"1 contract over ${C.MAX_TRADE_DOLLARS:,}, skipped: " + ", ".join(pricey))
-    if thin:
-        footer.append(f"Options too thin (under {C.MIN_OPTION_AVG_VOLUME:,}/day), skipped: " + ", ".join(thin))
-    title = f"Trend watchlist {session:%a %b %d}: {len(picks)} names"
-    body = "\n".join(lines + [rules] + footer) if picks else "No names line up with their trend today. Sitting out is a trade too.\n" + vix_text
+    lines = [trade_line(h) for h in picks]
+    n_put = sum(h["direction"] == "PUTS" for h in picks)
+    kinds = " · ".join(x for x in [f"{n_put} put{'s' * (n_put != 1)}" if n_put else "",
+                                   f"{len(picks) - n_put} call{'s' * (len(picks) - n_put != 1)}" if len(picks) - n_put else ""] if x)
+    title = f"📋 {len(picks)} trades · {kinds}" if picks else f"📋 No trades today ({session:%a})"
+    how = (f"Buy at or under the first price, right away: the move is usually in the first 10 min.\n"
+           f"Then set a sell at the 2nd price (+{C.TAKE_PROFIT:.0%}). Out at the 3rd (−{C.STOP_LOSS:.0%}). "
+           f"All closed by {ct('15:50')}. {vix_text}.")
+    body = "\n".join(lines + ["", how]) if picks else "Nothing lines up with its trend. Sitting out is a trade too.\n" + vix_text
 
     if dry_run:
         print(f"\n{title}\n{body}")
@@ -646,6 +638,21 @@ def run_trend_scan(dry_run=False, info=None):
                         round(vix, 1) if vix else "", h["contract"]])
     save_state(state)
     return picks
+
+
+def trade_line(h):
+    """'🔴 NVDA 215 put · Fri · ×2' / 'buy ≤3.85 → sell 3.97 · out 3.08'."""
+    call = h["direction"] == "CALLS"
+    m = re.match(r"^[A-Z.]+?(\d{6})([CP])(\d{8})$", h.get("symbol") or "")
+    if m:
+        exp = datetime.strptime(m.group(1), "%y%m%d")
+        name = f"{float(m.group(3)) / 1000:g} {'call' if call else 'put'} · exp {exp:%a %-m/%-d}"
+    else:
+        name = h["contract"].split(" (")[0]
+    ask = h["ask"]
+    return (f"{'🟢' if call else '🔴'} {h['ticker']} {name} · ×{h['qty']}\n"
+            f"    buy ≤{ask:.2f} → sell {ask * (1 + C.TAKE_PROFIT):.2f} · out {ask * (1 - C.STOP_LOSS):.2f}"
+            + ("  ⚠️ check earnings date" if h.get("earnings_unknown") else ""))
 
 
 def run_premarket(dry_run=False, info=None):
@@ -719,25 +726,21 @@ def run_premarket(dry_run=False, info=None):
             pass
     vix, vix_text = get_vix()
 
-    lines = []
+    dropping = []
     for h in picks:
         call = h["direction"] == "CALLS"
         p = pre.get(h["ticker"])
         h["premarket"] = p
         h["gap"] = (p / h["close"] - 1) * 100 if p else None
-        risk = ""
         if p and ((call and (p <= h["stop"] or p <= h["ema"])) or (not call and (p >= h["stop"] or p >= h["ema"]))):
-            risk = " ⚠️ gapping through its skip level, likely drops off"
-        move = f"pre ${p:.2f} ({h['gap']:+.1f}%)" if p else "no premarket trades yet"
-        lines.append(f"{'🟢' if call else '🔴'} {h['ticker']} ${h['close']:.2f} · {move} · skip if "
-                     f"{'below' if call else 'above'} ${h['stop']:.2f}{risk}"
-                     + (" ⚠️ earnings date unknown" if h.get("earnings_unknown") else ""))
+            dropping.append(h["ticker"])
     mkt = " · ".join(futs + [vix_text])
-    title = f"☀️ Premarket {today:%a %b %d}: systems OK"
-    body = "\n".join([mkt, f"{len(cands):,} names trend-aligned at the last close. Likely list:"] + lines +
-                      (["Earnings soon, skipped: " + ", ".join(skipped)] if skipped else []) +
-                      ([f"~1 contract over ${C.MAX_TRADE_DOLLARS:,}, skipped: " + ", ".join(pricey)] if pricey else []) +
-                      [f"Final list with contracts and sizes around {ct(C.TREND_SCAN_TIME_ET)}."])
+    puts = [h["ticker"] for h in picks if h["direction"] == "PUTS" and h["ticker"] not in dropping]
+    calls = [h["ticker"] for h in picks if h["direction"] == "CALLS" and h["ticker"] not in dropping]
+    title = f"☀️ Ready for {today:%a}: {len(puts)} puts · {len(calls)} calls likely"
+    body = "\n".join([mkt] + ([f"🔴 Puts: {' '.join(puts)}"] if puts else []) + ([f"🟢 Calls: {' '.join(calls)}"] if calls else [])
+                      + ([f"Likely to drop off (gapping the wrong way): {' '.join(dropping)}"] if dropping else [])
+                      + [f"Exact trades with prices at {ct(C.TREND_SCAN_TIME_ET)}."])
     info.update(market=mkt, skipped_earnings=skipped, skipped_pricey=pricey,
                 picks=[{"ticker": h["ticker"], "direction": h["direction"], "price": round(h["close"], 2),
                         "stop": round(h["stop"], 2), "premarket": round(h["premarket"], 2) if h["premarket"] else None,
@@ -828,7 +831,22 @@ def cloud():
     entry = {"time": now.isoformat(timespec="seconds"), "trigger": os.environ.get("GITHUB_EVENT_NAME", "manual"),
              "run_url": run_url()}
     t0 = time.time()
+    forced = os.environ.get("DAYBOOK_SLOT")       # set by the keeper loop, which already waited for the right time
     try:
+        if forced:
+            entry["trigger"] = "keeper"
+            if already_ran(forced, now.date()):
+                entry.update(kind="skip", result=f"{forced} already sent today")
+                return
+            entry["kind"] = forced
+            if forced == "premarket":
+                run_premarket(info=entry)
+            elif forced == "watchlist":
+                run_trend_scan(info=entry)
+            else:
+                entry.update(result="reminder sent")
+                entry["notified"] = close_reminder(info=entry)
+            return
         slot = ("premarket" if "07:50" <= hm <= "08:35" else "watchlist" if "09:40" <= hm <= "10:30"
                 else "reminder" if "15:20" <= hm <= "15:55" else None)
         if entry["trigger"] == "schedule" and slot and already_ran(slot, now.date()):
@@ -860,6 +878,37 @@ def cloud():
     finally:
         entry["seconds"] = round(time.time() - t0)
         record_run(entry)
+
+
+def wait_for_slot(max_wait=5 * 3600 + 15 * 60, grace=20 * 60):
+    """Keeper loop: sleep until the next run time (weekdays, ET) if it's within max_wait, then report which
+    one it is. GitHub's own cron can start hours late; this runs within about a minute of the time.
+    Writes slot=<premarket|watchlist|reminder|none> to GITHUB_OUTPUT."""
+    times = [("premarket", C.PREMARKET_TIME_ET), ("watchlist", C.TREND_SCAN_TIME_ET), ("reminder", C.CLOSE_REMINDER_ET)]
+    now = datetime.now(ET)
+    due = []
+    for i in range(5):
+        d = now.date() + timedelta(days=i)
+        if d.weekday() >= 5:
+            continue
+        for kind, hm in times:
+            t = datetime.combine(d, datetime.strptime(hm, "%H:%M").time(), ET)
+            if t > now - timedelta(seconds=grace) and not (t <= now and already_ran(kind, d)):
+                due.append((t, kind))
+    t, kind = min(due)
+    wait = (t - now).total_seconds()
+    if wait > max_wait:
+        log.info("keeper: next run %s at %s, sleeping %.0f min then handing off", kind, t, max_wait / 60)
+        time.sleep(max_wait)
+        kind = "none"
+    else:
+        log.info("keeper: sleeping %.0f min until %s at %s", max(wait, 0) / 60, kind, t)
+        time.sleep(max(wait, 0))
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a") as f:
+            f.write(f"slot={kind}\n")
+    print(kind)
 
 
 def already_ran(kind, day):
@@ -943,7 +992,7 @@ def tick():
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "cloud", "premarket", "trend", "swing", "intraday", "universe", "test-notify"])
+    ap.add_argument("cmd", choices=["run", "cloud", "wait", "premarket", "trend", "swing", "intraday", "universe", "test-notify"])
     ap.add_argument("--dry-run", action="store_true", help="print callouts instead of sending")
     a = ap.parse_args()
 
@@ -958,6 +1007,8 @@ def main():
         tick()
     elif a.cmd == "cloud":
         cloud()
+    elif a.cmd == "wait":
+        wait_for_slot()
     elif a.cmd == "premarket":
         run_premarket(dry_run=a.dry_run)
     elif a.cmd == "trend":
@@ -965,11 +1016,10 @@ def main():
     elif a.cmd == "universe":
         build_universe()
     elif a.cmd == "test-notify":
-        notify("TEST · Trend watchlist: 2 names",
-               "🔴 NVDA $210.96 (-0.6% today)\n   Oct 30 $210P (5 DTE) 3.90/3.95, OI 19,110\n   max 2 contracts ($790) · skip if above $233.44\n"
-               "🟢 AAPL $347.73 (-0.1% today)\n   Oct 30 $347.5C (5 DTE) 4.35/4.60, OI 1,800\n   max 2 contracts ($920) · skip if below $326.72\n"
-               f"Rules: in and out today · sell the option at +{C.TAKE_PROFIT:.0%} or more, or at -{C.STOP_LOSS:.0%} · "
-               f"max ${C.MAX_TRADE_DOLLARS:,} per trade\nThis is a test. Real watchlist arrives around {ct(C.TREND_SCAN_TIME_ET)} on trading days.",
+        demo = [{"ticker": "NVDA", "direction": "PUTS", "symbol": "NVDA261030P00215000", "ask": 3.85, "qty": 2},
+                {"ticker": "WMT", "direction": "CALLS", "symbol": "WMT261030C00120000", "ask": 1.63, "qty": 6}]
+        notify("TEST · 📋 2 trades · 1 put · 1 call", "\n".join([trade_line(h) for h in demo] +
+               ["", f"This is a test. Real trades arrive around {ct(C.TREND_SCAN_TIME_ET)} on trading days."]),
                priority=4, tags=["clipboard"])
         print("Sent test notification.")
     else:

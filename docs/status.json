@@ -1,6 +1,103 @@
 {
  "runs": [
   {
+   "time": "2026-10-29T09:45:00-04:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40880974118",
+   "kind": "watchlist",
+   "universe": 2098,
+   "downloaded": 2098,
+   "session": "2026-10-29",
+   "vix": 17.0,
+   "vix_text": "VIX 17.0 (normal)",
+   "aligned": 1149,
+   "skipped_earnings": [],
+   "skipped_pricey": [
+    "META",
+    "SNDK",
+    "DELL",
+    "BE",
+    "STX",
+    "LLY",
+    "AMAT",
+    "UNH",
+    "ASML",
+    "COST",
+    "PANW",
+    "GEV",
+    "MA",
+    "CAT"
+   ],
+   "skipped_thin": [
+    "INTC (109/day)",
+    "GOOGL (61/day)",
+    "GOOG (24/day)",
+    "ORCL (412/day)",
+    "NBIS (56/day)",
+    "CRWD (300/day)",
+    "V (45/day)",
+    "BRK-B (21/day)",
+    "CRWV (159/day)",
+    "MDT (32/day)",
+    "XOM (149/day)",
+    "LRCX (10/day)",
+    "CVX (115/day)",
+    "JNJ (318/day)",
+    "ACN (61/day)",
+    "HD (77/day)",
+    "MCD (242/day)",
+    "IBM (124/day)",
+    "BA (399/day)"
+   ],
+   "picks": [
+    {
+     "ticker": "NFLX",
+     "direction": "PUTS",
+     "price": 61.68,
+     "stop": 68.35,
+     "day_chg": -0.5,
+     "contract": "Nov 06 $62P (8 DTE) 1.17/1.23 at 8:49 CT, OI 2,451, IV 30%",
+     "target": "+3% target: option ~$1.24 \u2248 stock $61.61",
+     "symbol": "NFLX261106P00062000",
+     "qty": 8,
+     "opt_avg_vol": 863,
+     "size": "max 8 contracts ($984)",
+     "mid": 1.2
+    },
+    {
+     "ticker": "WMT",
+     "direction": "CALLS",
+     "price": 119.77,
+     "stop": 112.93,
+     "day_chg": 0.84,
+     "contract": "Nov 06 $120C (8 DTE) 2.06/2.20 at 8:49 CT, OI 2,417, IV 27%",
+     "target": "+3% target: option ~$2.19 \u2248 stock $119.88",
+     "symbol": "WMT261106C00120000",
+     "qty": 4,
+     "opt_avg_vol": 1380,
+     "size": "max 4 contracts ($880)",
+     "mid": 2.13
+    },
+    {
+     "ticker": "HOOD",
+     "direction": "PUTS",
+     "price": 90.4,
+     "stop": 105.97,
+     "day_chg": -1.13,
+     "contract": "Nov 06 $90P (8 DTE) 3.30/3.45 at 8:49 CT, OI 3,714, IV 61%",
+     "target": "+3% target: option ~$3.48 \u2248 stock $90.21",
+     "symbol": "HOOD261106P00090000",
+     "qty": 2,
+     "opt_avg_vol": 2370,
+     "size": "max 2 contracts ($690)",
+     "mid": 3.38
+    }
+   ],
+   "notified": true,
+   "result": "watchlist sent",
+   "seconds": 267
+  },
+  {
    "time": "2026-10-29T09:15:00-04:00",
    "trigger": "keeper",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40839489707",
@@ -581,7 +678,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-10-29T09:15:00-04:00",
+ "last_checked": "2026-10-29T09:45:00-04:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

@@ -749,7 +749,7 @@ def run_premarket(dry_run=False, info=None):
         print(f"\n{title}\n{body}")
         info["result"] = "dry run"
         return picks
-    info["notified"] = notify(title, body, priority=3, tags=["sunrise"], click=C.DASHBOARD_URL or None)
+    info["notified"] = notify(title, body, priority=4, tags=["sunrise"], click=C.DASHBOARD_URL or None)
     info["result"] = "premarket sent"
     return picks
 
@@ -991,7 +991,7 @@ def record_run(entry):
         if entry.get("picks"):
             md += ["", "| | Ticker | Price | Contract | Size | Skip if |", "|---|---|---|---|---|---|"]
             md += [f"| {'🟢' if p['direction'] == 'CALLS' else '🔴'} {p['direction']} | {p['ticker']} | ${p['price']} | "
-                   f"{p['contract']} | {p['size']} | ${p['stop']} |" for p in entry["picks"]]
+                   f"{p.get('contract', '')} | {p.get('size', '')} | ${p['stop']} |" for p in entry["picks"]]
         if entry.get("error"):
             md += ["", f"**Error:** `{entry['error']}`"]
         with open(summary, "a") as f:

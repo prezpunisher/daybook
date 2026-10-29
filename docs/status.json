@@ -1,6 +1,99 @@
 {
  "runs": [
   {
+   "time": "2026-10-29T09:15:00-04:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40839489707",
+   "kind": "premarket",
+   "universe": 2098,
+   "downloaded": 2098,
+   "aligned": 1180,
+   "market": "S&P fut +0.2% \u00b7 Nasdaq fut +0.4% \u00b7 VIX 16.9 (normal)",
+   "skipped_earnings": [
+    "INTC (Oct 29)"
+   ],
+   "skipped_pricey": [
+    "META",
+    "SNDK",
+    "DELL",
+    "BE",
+    "NBIS",
+    "STX",
+    "LLY",
+    "CRWD",
+    "AMAT"
+   ],
+   "picks": [
+    {
+     "ticker": "NVDA",
+     "direction": "PUTS",
+     "price": 215.38,
+     "stop": 230.55,
+     "premarket": 214.55,
+     "day_chg": -0.39
+    },
+    {
+     "ticker": "GOOGL",
+     "direction": "PUTS",
+     "price": 324.89,
+     "stop": 343.16,
+     "premarket": 287.94,
+     "day_chg": -11.37
+    },
+    {
+     "ticker": "GOOG",
+     "direction": "PUTS",
+     "price": 321.89,
+     "stop": 339.67,
+     "premarket": 284.64,
+     "day_chg": -11.57
+    },
+    {
+     "ticker": "ORCL",
+     "direction": "CALLS",
+     "price": 144.54,
+     "stop": 114.33,
+     "premarket": 144.15,
+     "day_chg": -0.27
+    },
+    {
+     "ticker": "NFLX",
+     "direction": "PUTS",
+     "price": 61.99,
+     "stop": 68.35,
+     "premarket": 62.48,
+     "day_chg": 0.79
+    },
+    {
+     "ticker": "WMT",
+     "direction": "CALLS",
+     "price": 118.77,
+     "stop": 112.93,
+     "premarket": 121.64,
+     "day_chg": 2.42
+    },
+    {
+     "ticker": "V",
+     "direction": "CALLS",
+     "price": 400.6,
+     "stop": 390.4,
+     "premarket": 407.8,
+     "day_chg": 1.8
+    },
+    {
+     "ticker": "BRK-B",
+     "direction": "CALLS",
+     "price": 540.34,
+     "stop": 525.55,
+     "premarket": 546.83,
+     "day_chg": 1.2
+    }
+   ],
+   "notified": true,
+   "result": "premarket sent",
+   "seconds": 301
+  },
+  {
    "time": "2026-10-28T15:49:42-04:00",
    "trigger": "schedule",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/40757725823",
@@ -488,7 +581,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-10-28T20:04:25-04:00",
+ "last_checked": "2026-10-29T09:15:00-04:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

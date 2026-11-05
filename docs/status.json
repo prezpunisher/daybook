@@ -1,6 +1,93 @@
 {
  "runs": [
   {
+   "time": "2026-11-05T09:15:00-05:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/42032179813",
+   "kind": "premarket",
+   "universe": 2049,
+   "downloaded": 2049,
+   "aligned": 1427,
+   "market": "S&P fut +0.2% \u00b7 Nasdaq fut +0.0% \u00b7 VIX 16.8 (normal)",
+   "skipped_earnings": [],
+   "skipped_pricey": [
+    "QQQ",
+    "MU",
+    "META",
+    "AMD",
+    "SNDK"
+   ],
+   "picks": [
+    {
+     "ticker": "IWM",
+     "direction": "CALLS",
+     "price": 284.02,
+     "stop": 273.27,
+     "premarket": 284.41,
+     "day_chg": 0.14
+    },
+    {
+     "ticker": "NVDA",
+     "direction": "PUTS",
+     "price": 200.13,
+     "stop": 223.81,
+     "premarket": 196.7,
+     "day_chg": -1.71
+    },
+    {
+     "ticker": "AMZN",
+     "direction": "CALLS",
+     "price": 266.03,
+     "stop": 236.55,
+     "premarket": 270.32,
+     "day_chg": 1.61
+    },
+    {
+     "ticker": "GOOGL",
+     "direction": "PUTS",
+     "price": 288.93,
+     "stop": 310.82,
+     "premarket": 292.07,
+     "day_chg": 1.09
+    },
+    {
+     "ticker": "INTC",
+     "direction": "PUTS",
+     "price": 58.27,
+     "stop": 78.82,
+     "premarket": 56.75,
+     "day_chg": -2.61
+    },
+    {
+     "ticker": "AVGO",
+     "direction": "PUTS",
+     "price": 325.48,
+     "stop": 357.52,
+     "premarket": 315.85,
+     "day_chg": -2.96
+    },
+    {
+     "ticker": "GOOG",
+     "direction": "PUTS",
+     "price": 287.3,
+     "stop": 308.59,
+     "premarket": 290.47,
+     "day_chg": 1.1
+    },
+    {
+     "ticker": "TSM",
+     "direction": "PUTS",
+     "price": 395.75,
+     "stop": 445.91,
+     "premarket": 383.3,
+     "day_chg": -3.15
+    }
+   ],
+   "notified": true,
+   "result": "premarket sent",
+   "seconds": 168
+  },
+  {
    "time": "2026-11-04T16:15:00-05:00",
    "trigger": "keeper",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/41907184223",
@@ -2924,7 +3011,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-11-04T16:15:00-05:00",
+ "last_checked": "2026-11-05T09:15:00-05:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

@@ -44,7 +44,7 @@ UNIVERSE_FILE = DATA / "universe.json"
 STATE_FILE = DATA / "state.json"
 ALERTS_CSV = DATA / "alerts.csv"
 STATUS_FILE = ROOT / "docs" / "status.json"      # read by the dashboard (docs/index.html)
-STATUS_KEEP = 120
+STATUS_KEEP = 1000
 ET = ZoneInfo("America/New_York")    # market clock: all scheduling logic runs on Eastern time
 CT = ZoneInfo("America/Chicago")     # what the user reads: every push and the dashboard show Central
 

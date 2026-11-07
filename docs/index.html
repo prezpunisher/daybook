@@ -95,6 +95,11 @@ tr:last-child td { border-bottom: 0; }
 td.r, th.r { text-align: right; }
 .rules { display: flex; flex-wrap: wrap; gap: 8px; }
 .rules span { background: var(--mid); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.days button { flex: none; font: inherit; font-size: 13px; text-align: left; cursor: pointer; color: var(--text-primary);
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+.days button b { display: block; font-size: 14px; }
+.days button.on { border-color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--text-primary); }
 footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 @media (max-width: 680px) {
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -123,7 +128,10 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
   <h2>Today <span class="meta" id="todayMeta"></span></h2>
   <div class="day" id="day"></div>
 
-  <h2>Latest watchlist <span class="meta" id="wlMeta"></span></h2>
+  <h2>Past days <span class="meta">tap a day to see its watchlist and scorecard</span></h2>
+  <div class="days" id="days"></div>
+
+  <h2>Watchlist <span class="meta" id="wlMeta"></span></h2>
   <div id="watchlist"></div>
 
   <h2>Scorecard <span class="meta" id="scMeta"></span></h2>
@@ -184,7 +192,12 @@ function repoLinks() {
   return { run: `${base}/actions/workflows/daybook.yml`, runs: `${base}/actions` };
 }
 
+let pickedDay = null;                           // "YYYY-MM-DD" chosen in Past days; null = most recent
+let lastStatus = { runs: [] };
+const dayKey = r => r.time.slice(0, 10);
+
 function render(status) {
+  lastStatus = status;
   const now = new Date();
   const runs = (status.runs || []).map(r => ({ ...r, at: new Date(r.time) }));
   const lastChecked = status.last_checked ? new Date(status.last_checked) : null;
@@ -206,14 +219,33 @@ function render(status) {
   $("sub").textContent = (lastChecked ? `Last checked ${ago(lastChecked)}` : "No runs yet") +
     (next ? ` · Next: ${fmtDay(next.at)} ${fmtTime(next.at)} CT (${next.label.toLowerCase()})` : "");
 
-  const wl = runs.find(r => r.kind === "watchlist" && r.result !== "failed");
+  const latestWl = runs.find(r => r.kind === "watchlist" && r.result !== "failed");
+
+  // past days: every date with a watchlist or a scorecard
+  const scored = r => (r.kind === "review" || r.kind === "reminder") && r.scorecard && r.scorecard.length;
+  const dates = [...new Set(runs.filter(r => (r.kind === "watchlist" && r.result !== "failed" && (r.picks || []).length) || scored(r)).map(dayKey))];
+  if (!dates.includes(pickedDay)) pickedDay = dates[0] || null;
+  $("days").innerHTML = dates.length ? dates.map(d => {
+    const w = runs.find(r => r.kind === "watchlist" && r.result !== "failed" && dayKey(r) === d);
+    const s = runs.find(r => scored(r) && dayKey(r) === d);
+    let line = w ? `${(w.picks || []).length} trades` : "—";
+    if (s) {
+      const pnl = s.scorecard.reduce((a, x) => a + (x.pnl || 0), 0);
+      line = `${s.scorecard.filter(x => x.result > 0).length}/${s.scorecard.length} won · <span class="${pnl >= 0 ? "pos" : "neg"}">${pnl >= 0 ? "+" : "−"}$${Math.abs(Math.round(pnl)).toLocaleString()}</span>`;
+    }
+    const at = (w || s).at;
+    return `<button data-day="${d}" class="${d === pickedDay ? "on" : ""}"><b>${esc(fmtDay(at))}</b>${line}</button>`;
+  }).join("") : `<div class="empty">Days show up here after the first watchlist.</div>`;
+  $("days").querySelectorAll("button").forEach(b => b.onclick = () => { pickedDay = b.dataset.day; render(lastStatus); });
+
+  const wl = runs.find(r => r.kind === "watchlist" && r.result !== "failed" && dayKey(r) === pickedDay);
   const okRuns = runs.filter(r => r.kind !== "skip");
   const fails = okRuns.filter(r => r.result === "failed").length;
   const pushes = okRuns.filter(r => "notified" in r);
   const tile = (v, l, cls = "") => `<div class="tile"><div class="v ${cls}">${esc(v)}</div><div class="l">${esc(l)}</div></div>`;
   $("tiles").innerHTML =
-    tile(wl ? (wl.picks || []).length : "—", "names on the latest watchlist") +
-    tile(wl && wl.vix ? wl.vix : "—", wl && wl.vix_text ? wl.vix_text.replace(/^VIX [\d.]+ /, "VIX ") : "VIX") +
+    tile(latestWl ? (latestWl.picks || []).length : "—", "names on the latest watchlist") +
+    tile(latestWl && latestWl.vix ? latestWl.vix : "—", latestWl && latestWl.vix_text ? latestWl.vix_text.replace(/^VIX [\d.]+ /, "VIX ") : "VIX") +
     tile(okRuns.length ? `${okRuns.length - fails}/${okRuns.length}` : "—", "runs succeeded", fails ? "neg" : "") +
     tile(pushes.length ? `${pushes.filter(r => r.notified).length}/${pushes.length}` : "—", "phone pushes delivered");
 
@@ -263,7 +295,7 @@ function render(status) {
   }
 
   // scorecard: written by the afternoon reminder run, option level, times in CT
-  const sc = runs.find(r => (r.kind === "review" || r.kind === "reminder") && r.scorecard && r.scorecard.length);
+  const sc = runs.find(r => scored(r) && dayKey(r) === pickedDay);
   if (!sc) {
     $("scMeta").textContent = "";
     $("scorecard").innerHTML = `<div class="empty">After the 3:15 CT day review, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5% or −20%.</div>`;

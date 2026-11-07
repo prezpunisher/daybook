@@ -786,7 +786,7 @@ def day_review(info=None):
     body = "\n".join(lines + ["", f"Up {C.TAKE_PROFIT:.0%}+: {reach}",
                               f"Bought at the first trade after the {sc[0]['alert']} CT push, ${C.MAX_TRADE_DOLLARS:,} max each. "
                               f"✅ = +{C.TAKE_PROFIT:.0%} came before −{C.STOP_LOSS:.0%}."])
-    return notify(title, body, priority=3, tags=["bar_chart"], click=C.DASHBOARD_URL or None)
+    return notify(title, body, priority=4, tags=["bar_chart"], click=C.DASHBOARD_URL or None)
 
 
 def score_today():

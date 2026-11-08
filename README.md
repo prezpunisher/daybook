@@ -29,6 +29,16 @@ Backtests (`backtest_trend.py`, plus a 5-year open-to-close check) found no entr
 direction better than a coin flip, so the watchlist does not say *when* to buy. Its job is to keep
 trades small, with the trend and out by the close, which is what separated the wins from the losses.
 
+## Research (separate from the live pushes)
+A daily "Research" GitHub job (`research.py`, settings in `research_config.py`) runs after the close and fills the
+dashboard's Research page (`docs/research.html`). It never sends pushes and never touches the watchlist.
+- **Watchlist 15m check** (`side_analysis.py`): for each scored pick, the stock's 15-minute EMA50, MACD 12/26/9
+  and CCI 20 at the push, to learn why picks fail. After 20 trading days we decide whether it becomes a filter.
+- **15m EMA50 + MACD + CCI strategy, in shadow** (`strategy_15m.py`): every signal on 21 liquid names, scored on
+  its weekly ATM option's real 1-minute trades with the watchlist's exit rules.
+- **Backtest**: the same strategy over 60 days on estimated option prices with spread, slippage and commission,
+  rerun weekly. TradingView version: `tradingview/ema50_macd_cci_15m.pine`.
+
 ## Legacy: RSI callouts (`STRATEGY = "rsi"`)
 RSI crosses 30/70, confirmed by EMA45, MACD 12/26/9 and Supertrend 7/3 within 5 candles. Backtested
 negative (`backtest.py`): the option hits +3% about 80% of the time, but the misses lose 35-45%.

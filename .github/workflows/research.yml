@@ -1,0 +1,46 @@
+name: Research
+
+# Side research, separate from the Daybook keeper: never sends pushes and never touches docs/status.json.
+# Runs after the close; it catches up on any missed day, so a late start doesn't matter.
+on:
+  schedule:
+    - cron: "30 21 * * 1-5"     # 3:30 / 4:30 CT
+    - cron: "0 3 * * 2-6"       # backup run overnight
+  workflow_dispatch:
+
+permissions:
+  contents: write             # commit docs/research.json
+  pages: write
+  id-token: write
+
+concurrency:
+  group: research
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Run research
+        run: python -W ignore research.py
+      - name: Save results
+        run: |
+          git config user.name "scanner-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/research.json
+          git diff --cached --quiet && exit 0
+          git commit -m "research: $(date -u +%FT%TZ)"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 10; done
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - uses: actions/deploy-pages@v4
+        continue-on-error: true     # the dashboard republishes after the next Daybook run anyway

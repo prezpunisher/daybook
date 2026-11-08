@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Daybook Research</title>
+<style>
+:root {
+  --surface-0: #f5f4f1;
+  --surface-1: #fcfcfb;
+  --border: #e3e2dd;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7974;
+  --pos: #1f9e6e;
+  --neg: #e34948;
+  --warn: #b7791f;
+  --mid: #f0efec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-0: #121211;
+    --surface-1: #1a1a19;
+    --border: #2e2e2c;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --pos: #18a070;
+    --neg: #e66767;
+    --warn: #d69e2e;
+    --mid: #383835;
+  }
+}
+:root[data-theme="dark"] {
+  --surface-0: #121211;
+  --surface-1: #1a1a19;
+  --border: #2e2e2c;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --pos: #18a070;
+  --neg: #e66767;
+  --warn: #d69e2e;
+  --mid: #383835;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 960px; margin: 0 auto; padding: 28px 16px 64px; }
+a { color: inherit; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; justify-content: space-between; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 17px; margin: 36px 0 12px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+h2 .meta { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+.sub { color: var(--text-secondary); margin: 6px 0 0; font-size: 14px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  background: var(--surface-1); border: 1px solid var(--border); font-weight: 600; font-size: 14px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--text-muted); }
+.ok .dot { background: var(--pos); } .bad .dot { background: var(--neg); } .warn .dot { background: var(--warn); }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { text-decoration: none; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-1); font-size: 14px; }
+.btn.primary { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.tile .v { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.tile .l { color: var(--text-secondary); font-size: 13px; }
+.picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pick { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+  text-decoration: none; display: block; min-width: 0; }
+.pick:hover { border-color: var(--text-muted); }
+.pick .top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.pick .tk { font-size: 18px; font-weight: 700; }
+.pick .px { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 6px; color: #fff; letter-spacing: .02em; }
+.badge.calls { background: var(--pos); } .badge.puts { background: var(--neg); }
+.pick .ct { margin-top: 6px; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.pick .row { margin-top: 6px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--text-secondary); }
+.pick .row b { color: var(--text-primary); font-weight: 600; }
+.pos { color: var(--pos); } .neg { color: var(--neg); } .muted { color: var(--text-muted); }
+.note { color: var(--text-muted); font-size: 13px; margin: 10px 0 0; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 4px 16px; overflow-x: auto; }
+.empty { background: var(--surface-1); border: 1px dashed var(--border); border-radius: 12px; padding: 24px; color: var(--text-secondary); text-align: center; }
+.day { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.step { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.step .t { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.step .s { font-weight: 600; margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { color: var(--text-muted); font-weight: 500; font-size: 13px; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+.rules { display: flex; flex-wrap: wrap; gap: 8px; }
+.rules span { background: var(--mid); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.days button { flex: none; font: inherit; font-size: 13px; text-align: left; cursor: pointer; color: var(--text-primary);
+  background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
+.days button b { display: block; font-size: 14px; }
+.days button.on { border-color: var(--text-primary); box-shadow: inset 0 0 0 1px var(--text-primary); }
+footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
+@media (max-width: 680px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .picks { grid-template-columns: 1fr; }
+  .day { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hide-sm { display: none; }
+}
+
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 5px 10px; border: 0; background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
+.seg button.on { background: var(--text-primary); color: var(--surface-1); }
+.lead { color: var(--text-secondary); margin: 0 0 12px; font-size: 14px; max-width: 70ch; }
+.decide { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.decide .bar { height: 8px; background: var(--mid); border-radius: 99px; margin: 8px 0 4px; overflow: hidden; }
+.decide .bar span { display: block; height: 100%; background: var(--text-primary); }
+details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; margin: 12px 0 8px; }
+.tag { font-size: 12px; padding: 1px 6px; border-radius: 5px; background: var(--mid); color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Research</h1>
+      <p class="sub" id="sub">Loading…</p>
+    </div>
+    <div class="btns">
+      <a class="btn" href="./">← Daybook</a>
+    </div>
+  </header>
+  <p class="note">Research only. Nothing on this page sends a push or changes the 8:45 watchlist. It updates once a day after the close.</p>
+
+  <h2>Watchlist 15m check <span class="meta">why picks fail</span></h2>
+  <p class="lead">For every watchlist pick: the stock's 15-minute EMA50, MACD (12/26/9) and CCI (20) on the last candle that closed before the 8:45 push. If losers keep showing up when the three don't agree, that check could become a filter.</p>
+  <div class="decide" id="decide"></div>
+  <div class="tiles" id="wcTiles"></div>
+  <h2 style="margin-top:24px">Each reading at the push <span class="meta">trades where it was true vs. not</span></h2>
+  <div id="wcSplit"></div>
+  <h2 style="margin-top:24px">Every pick <span class="meta" id="wcMeta"></span> <span class="seg" id="wcSeg"><button data-v="10" class="on">Last 10 days</button><button data-v="all">All</button><button data-v="lost">Losers</button></span></h2>
+  <div id="wcRows"></div>
+
+  <h2>15m EMA50 + MACD + CCI strategy <span class="tag">shadow</span> <span class="meta">signals logged and scored, never pushed</span></h2>
+  <p class="lead" id="shLead"></p>
+  <div class="tiles" id="shTiles"></div>
+  <h2 style="margin-top:24px">Breakdown</h2>
+  <div id="shSplit"></div>
+  <h2 style="margin-top:24px">Signals <span class="meta" id="shMeta"></span> <span class="seg" id="shSeg"><button data-v="10" class="on">Last 10 days</button><button data-v="all">All</button></span></h2>
+  <div id="shRows"></div>
+
+  <h2>Backtest <span class="meta" id="btMeta"></span></h2>
+  <p class="lead" id="btLead"></p>
+  <div id="btRows"></div>
+  <details><summary>By ticker</summary><div id="btTick"></div></details>
+
+  <footer>Data: Yahoo Finance (15-minute stock candles, 1-minute option trades). Same exit rules as the watchlist: +3% / −20% on the option, out by 2:50 CT, $1,000 max per trade.</footer>
+</main>
+<script>
+const TZ = "America/Chicago";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmtDay = d => new Intl.DateTimeFormat("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" }).format(new Date(d + "T12:00:00Z"));
+const money = v => `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : "−"}$${Math.abs(Math.round(v)).toLocaleString()}</span>`;
+const pctc = (v, d = 0) => v == null ? "—" : `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${(v * 100).toFixed(d)}%</span>`;
+const tile = (v, l) => `<div class="tile"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`;
+const yn = (v, good = true) => v == null ? '<span class="muted">—</span>' : v ? `<span class="${good ? "pos" : "neg"}">✓</span>` : `<span class="${good ? "neg" : "pos"}">✗</span>`;
+const mk = (v, f) => v ? `<span class="pos">${esc(f)}</span>` : '<span class="muted">—</span>';
+let data = null, wcView = "10", shView = "10";
+
+function stats(rows, pnlKey = "pnl", wonFn = r => r.won) {
+  const n = rows.length, w = rows.filter(wonFn).length, pnl = rows.reduce((a, r) => a + (r[pnlKey] || 0), 0);
+  const gw = rows.filter(r => r[pnlKey] > 0).reduce((a, r) => a + r[pnlKey], 0), gl = -rows.filter(r => r[pnlKey] <= 0).reduce((a, r) => a + r[pnlKey], 0);
+  return { n, w, pnl, pf: gl > 0 ? gw / gl : null };
+}
+const statCell = s => s.n ? `${s.w}/${s.n} won <span class="muted">(${Math.round(100 * s.w / s.n)}%)</span> · ${money(s.pnl)}` : '<span class="muted">none</span>';
+function splitTable(rows, factors, wonFn) {
+  return `<div class="card"><table><thead><tr><th>Reading</th><th>True</th><th>Not true</th></tr></thead><tbody>${factors.map(([k, label]) => {
+    const y = rows.filter(r => r[k] === true), n = rows.filter(r => r[k] === false);
+    return `<tr><td>${esc(label)}</td><td>${statCell(stats(y, "pnl", wonFn))}</td><td>${statCell(stats(n, "pnl", wonFn))}</td></tr>`;
+  }).join("")}</tbody></table></div>`;
+}
+function lastDays(rows, view) {
+  if (view === "all") return rows;
+  if (view === "lost") return rows.filter(r => !r.won);
+  const days = [...new Set(rows.map(r => r.date))].slice(0, +view);
+  return rows.filter(r => days.includes(r.date));
+}
+function why(r) {
+  const out = [];
+  if (!r.ema_ok) out.push("price on the wrong side of EMA50");
+  if (!r.macd_ok) out.push("MACD against");
+  if (!r.cci_ok) out.push(`CCI ${r.cci > 0 ? "+" : ""}${r.cci} against`);
+  if (r.cross_against_1h) out.push("MACD crossed against in the last hour");
+  return out.join("; ") || "all three agreed";
+}
+
+function renderWatchlist() {
+  const rows = data.watchlist_check || [];
+  const days = [...new Set(rows.map(r => r.date))];
+  const need = (data.settings || {}).decision_days || 20;
+  const all3 = stats(rows.filter(r => r.all3_ok)), notAll = stats(rows.filter(r => !r.all3_ok));
+  $("decide").innerHTML = `<b>${days.length} of ${need} trading days tracked</b><div class="bar"><span style="width:${Math.min(100, 100 * days.length / need)}%"></span></div>
+    <div class="note" style="margin:0">At ${need} days: if picks where all three agree keep winning about 90% of the time and make money while the others lose, add it as a filter on the 8:45 list. Until then the live watchlist doesn't change.</div>`;
+  $("wcTiles").innerHTML = tile(statCell(all3).split(" · ")[0], "won when all three agreed") + tile(money(all3.pnl), "P&L when all three agreed") +
+    tile(statCell(notAll).split(" · ")[0], "won when they didn't") + tile(money(notAll.pnl), "P&L when they didn't");
+  $("wcSplit").innerHTML = splitTable(rows, [["all3_ok", "All three agree with the trade"], ["macd_ok", "MACD on the trade's side of its signal"],
+    ["ema_ok", "Price on the trade's side of EMA50"], ["cci_ok", "CCI on the trade's side of 0"], ["cci_strong", "CCI past ±100"],
+    ["fresh_cross", "MACD crossed our way in the last hour"], ["cross_against_1h", "MACD crossed against us in the last hour"]]);
+  const shown = lastDays(rows, wcView);
+  $("wcMeta").textContent = `${shown.length} picks`;
+  $("wcRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">Result</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
+      <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.alert)}</span></td>
+      <td>${r.dir === "C" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted">${esc(r.option || "")}</span></td>
+      <td class="r">${r.won ? "✅" : "❌"} ${money(r.pnl)}</td>
+      <td>${yn(r.ema_ok)}</td><td>${yn(r.macd_ok)}${r.cross_against_1h ? ' <span class="neg" title="crossed against in the last hour">↺</span>' : ""}</td>
+      <td class="r">${r.cci > 0 ? "+" : ""}${r.cci}</td><td>${yn(r.all3_ok)}</td>
+      <td class="hide-sm ${r.won ? "muted" : ""}">${esc(why(r))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No scored picks yet.</div>`;
+}
+
+function renderShadow() {
+  const all = data.shadow || [];
+  const scored = all.filter(r => r.result != null);
+  const won = r => r.result > 0;
+  const days = (data.shadow_days || []).length;
+  const st = data.settings || {};
+  $("shLead").innerHTML = `CALL when a closed 15-minute candle is above EMA${st.ema || 50}, MACD crosses above its signal on that candle and CCI is above 0; PUT is the mirror. Checked from ${esc(st.first || "8:45")} to ${esc(st.last || "2:15")} CT on ${(st.tickers || []).length} liquid names. Each signal is scored on its weekly ATM option's real 1-minute trades from the candle's close.`;
+  const s = stats(scored, "pnl", won), liquid = stats(scored.filter(r => !r.thin), "pnl", won);
+  $("shTiles").innerHTML = tile(`${all.length}`, `signals over ${days} trading days`) + tile(s.n ? `${Math.round(100 * s.w / s.n)}%` : "—", "won (+3% before −20%)") +
+    tile(money(s.pnl), "P&L, $1,000 max each") + tile(s.pf != null ? s.pf.toFixed(2) : "—", "profit factor");
+  const rows = scored.map(r => ({ ...r, won: won(r), trend: r.daily_trend_agrees, liquid: !r.thin, isCall: r.direction === "CALLS" }));
+  $("shSplit").innerHTML = splitTable(rows, [["trend", "Daily trend agrees (same as the watchlist's)"], ["cci_strong", "CCI past ±100"],
+    ["liquid", `Option traded ${"500+"} contracts that day`], ["isCall", "Call (vs. put)"]]);
+  const shown = lastDays(all, shView);
+  $("shMeta").textContent = `${shown.length} signals`;
+  $("shRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">−20%</th><th class="r">Result</th></tr></thead><tbody>${shown.map(r => `<tr>
+      <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.time)}</span></td>
+      <td>${r.direction === "CALLS" ? '<span class="pos">▲ CALL</span>' : '<span class="neg">▼ PUT</span>'} <b>${esc(r.ticker)}</b></td>
+      <td>${r.symbol ? `<a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}/" target="_blank" rel="noopener">${esc(r.label || r.symbol)}</a>` : '<span class="muted">not found</span>'}</td>
+      <td class="r hide-sm ${r.thin ? "neg" : ""}">${(r.day_option_volume || 0).toLocaleString()}</td>
+      <td class="hide-sm">${yn(r.daily_trend_agrees)}</td>
+      <td class="r">${r.cci > 0 ? "+" : ""}${r.cci}${r.cci_strong ? " ★" : ""}</td>
+      <td class="r">${r.entry != null ? `$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span>` : "—"}</td>
+      <td class="r">${r.hit3 ? `<span class="pos">${esc(r.hit3)} (${r.min3}m)</span>` : '<span class="muted">—</span>'}</td>
+      <td class="r">${r.hit20 ? `<span class="neg">${esc(r.hit20)}</span>` : '<span class="muted">—</span>'}</td>
+      <td class="r">${r.result != null ? `${r.result > 0 ? "✅" : "❌"} ${money(r.pnl)}` : '<span class="muted">no data</span>'}</td></tr>`).join("")}</tbody></table></div>
+      <p class="note">★ = CCI past ±100. Bought = first option trade after the signal candle closed. Opt vol in red = under 500 contracts that day (hard to get in and out).</p>` : `<div class="empty">No signals logged yet.</div>`;
+}
+
+function renderBacktest() {
+  const b = data.backtest;
+  if (!b || !b.variants) { $("btRows").innerHTML = `<div class="empty">The first backtest runs with the next research job.</div>`; return; }
+  const c = b.costs || {};
+  $("btMeta").textContent = `${b.days} trading days, ${fmtDay(b.from)} – ${fmtDay(b.to)} · rerun weekly`;
+  $("btLead").innerHTML = `Yahoo keeps no past option quotes, so these option prices are estimates from the stock's 5-minute candles. Costs included: ${Math.round((c.spread || 0) * 100)}% bid/ask spread (half paid on each side), ${((c.slippage || 0) * 100).toFixed(1)}% slippage per side and $${(c.commission || 0).toFixed(2)} commission per contract per side. The shadow log above uses real option trades instead.`;
+  const row = v => `<tr><td>${esc(v.name)}</td><td class="r">${v.trades}</td><td class="r">${v.trades ? Math.round(v.win_rate * 100) + "%" : "—"}</td>
+    <td class="r">${pctc(v.avg_return, 1)}</td><td class="r">${v.trades ? money(v.total_pnl) : "—"}</td><td class="r">${v.profit_factor ?? "—"}</td>
+    <td class="r hide-sm">${v.max_drawdown != null ? "$" + v.max_drawdown.toLocaleString() : "—"}</td><td class="r hide-sm">${v.trades ? `${money(v.avg_win)} / ${money(v.avg_loss)}` : "—"}</td><td class="r hide-sm">${v.risk_reward ?? "—"}</td></tr>`;
+  const head = first => `<thead><tr><th>${first}</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Avg return</th><th class="r">Total</th><th class="r">Profit factor</th><th class="r hide-sm">Max drawdown</th><th class="r hide-sm">Avg win / loss</th><th class="r hide-sm">Reward:risk</th></tr></thead>`;
+  $("btRows").innerHTML = `<div class="card"><table>${head("Variant")}<tbody>${b.variants.map(row).join("")}</tbody></table></div>`;
+  $("btTick").innerHTML = `<div class="card"><table>${head("Ticker")}<tbody>${(b.by_ticker || []).map(v => row({ ...v, name: v.ticker })).join("")}</tbody></table></div>`;
+}
+
+function render() {
+  $("sub").textContent = data.updated ? `Updated ${new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(data.updated))} CT` : "No research run yet";
+  renderWatchlist(); renderShadow(); renderBacktest();
+}
+function seg(id, set) {
+  $(id).querySelectorAll("button").forEach(b => b.onclick = () => {
+    $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); set(b.dataset.v); render();
+  });
+}
+seg("wcSeg", v => wcView = v); seg("shSeg", v => shView = v);
+fetch("research.json?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(d => { data = d || {}; render(); });
+</script>
+</body>
+</html>

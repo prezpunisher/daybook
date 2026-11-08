@@ -1,0 +1,84 @@
+//@version=6
+// EMA50 + MACD + CCI (15m), research strategy. Separate from TriLock and the Daybook watchlist.
+//   CALL: a completed 15m candle closes above EMA50, MACD crosses above its signal on that candle, CCI > 0
+//   PUT:  a completed 15m candle closes below EMA50, MACD crosses below its signal on that candle, CCI < 0
+// CCI past +100 / -100 = strong momentum (shown, not required). Signals only on 15-minute charts, only on
+// closed candles, at most one per candle. Uses the stock's candles, not the option's.
+// Times shown are Central; the session check runs on New York time.
+//
+// Alerts: create ONE alert on this indicator with "Any alert() function call". The message is JSON with
+// ticker, signal, time, close, EMA, MACD, MACD signal and CCI, so it works as a phone alert or a webhook.
+indicator("EMA50 + MACD + CCI (15m)", shorttitle = "EMC15", overlay = true)
+
+// ---------------------------------------------------------------- inputs
+grpS = "Strategy"
+enabled = input.bool(true, "Strategy enabled", group = grpS)
+emaLen  = input.int(50, "EMA length", minval = 1, group = grpS)
+emaSrc  = input.source(close, "EMA source", group = grpS)
+macdF   = input.int(12, "MACD fast", minval = 1, group = grpS)
+macdS   = input.int(26, "MACD slow", minval = 1, group = grpS)
+macdSig = input.int(9, "MACD signal", minval = 1, group = grpS)
+macdSrc = input.source(close, "MACD source", group = grpS)
+cciLen  = input.int(20, "CCI length", minval = 1, group = grpS)
+cciSrc  = input.source(hlc3, "CCI source", group = grpS)
+cciUp   = input.float(100, "CCI upper band", group = grpS)
+cciDn   = input.float(-100, "CCI lower band", group = grpS)
+rthOnly = input.bool(true, "Regular hours only (8:30-3:00 CT)", group = grpS)
+
+grpV = "Display"
+showTbl = input.bool(true, "Show status panel", group = grpV)
+
+TZ = "America/New_York"
+colPos = #1f9e6e
+colNeg = #e34948
+colMut = color.gray
+
+// ---------------------------------------------------------------- indicators
+is15 = timeframe.period == "15"
+e = ta.ema(emaSrc, emaLen)
+[m, s, hist] = ta.macd(macdSrc, macdF, macdS, macdSig)
+c = ta.cci(cciSrc, cciLen)
+
+hm = hour(time, TZ) * 100 + minute(time, TZ)
+inRth = not rthOnly or (hm >= 930 and hm < 1600)
+ok = enabled and is15 and inRth and barstate.isconfirmed
+
+xUp = ta.crossover(m, s)      // computed every bar (Pine skips calls inside a short-circuited "and")
+xDn = ta.crossunder(m, s)
+callSig = ok and close > e and xUp and c > 0
+putSig  = ok and close < e and xDn and c < 0
+
+// ---------------------------------------------------------------- visuals
+plot(e, "EMA", color = color.new(color.orange, 0), linewidth = 2)
+plotshape(callSig, "CALL", shape.triangleup, location.belowbar, colPos, text = "CALL", size = size.tiny)
+plotshape(putSig, "PUT", shape.triangledown, location.abovebar, colNeg, text = "PUT", size = size.tiny)
+
+// ---------------------------------------------------------------- alerts (JSON: phone alert or webhook)
+f(v) => str.tostring(v, "#.####")
+ctTime = str.format_time(time_close, "yyyy-MM-dd HH:mm", "America/Chicago")
+msg(dir) => '{"strategy":"ema50_macd_cci_15m","ticker":"' + syminfo.ticker + '","signal":"' + dir + '","time_ct":"' + ctTime +
+     '","close":' + f(close) + ',"ema":' + f(e) + ',"macd":' + f(m) + ',"macd_signal":' + f(s) + ',"cci":' + f(c) +
+     ',"cci_strong":' + (dir == "CALL" ? (c > cciUp ? "true" : "false") : (c < cciDn ? "true" : "false")) + '}'
+
+if callSig
+    alert(msg("CALL"), alert.freq_once_per_bar_close)
+if putSig
+    alert(msg("PUT"), alert.freq_once_per_bar_close)
+
+alertcondition(callSig, "EMC15 CALL", "EMC15 {{ticker}}: CALL at {{close}}")
+alertcondition(putSig, "EMC15 PUT", "EMC15 {{ticker}}: PUT at {{close}}")
+
+// ---------------------------------------------------------------- status panel
+var table tb = table.new(position.bottom_right, 2, 6, bgcolor = color.new(chart.bg_color, 10), border_color = color.new(colMut, 70), border_width = 1)
+row(r, k, v, col) =>
+    table.cell(tb, 0, r, k, text_color = chart.fg_color, text_size = size.small, text_halign = text.align_left)
+    table.cell(tb, 1, r, v, text_color = col, text_size = size.small, text_halign = text.align_right)
+
+if showTbl and barstate.islast
+    row(0, "EMC15", not enabled ? "disabled" : is15 ? "on" : "switch to 15m", enabled and is15 ? chart.fg_color : colNeg)
+    row(1, "EMA" + str.tostring(emaLen), close > e ? "above" : "below", close > e ? colPos : colNeg)
+    row(2, "MACD", m > s ? "> signal" : "< signal", m > s ? colPos : colNeg)
+    row(3, "CCI " + str.tostring(cciLen), str.tostring(c, "#"), c > cciUp ? colPos : c < cciDn ? colNeg : chart.fg_color)
+    row(4, "All three", close > e and m > s and c > 0 ? "bullish" : close < e and m < s and c < 0 ? "bearish" : "mixed",
+         close > e and m > s and c > 0 ? colPos : close < e and m < s and c < 0 ? colNeg : colMut)
+    row(5, "Signal needs", "MACD cross on a closed candle", colMut)

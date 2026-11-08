@@ -23,6 +23,25 @@ import strategy_15m as ST
 
 OUT = S.ROOT / "docs" / "research.json"
 OPTION_HISTORY_DAYS = 29          # Yahoo keeps about 30 days of 1-minute option prices
+TARGETS = {"3": ("min3", 0.03), "5": ("min5", 0.05), "10": ("min10", 0.10)}
+
+
+def exits(r):
+    """What the trade would have made selling at +3%, +5% or +10% (still -20% way out, out by 2:50 CT), and at
+    its best price of the day (hindsight). Uses the same 1-minute option trades as the +3% result."""
+    if r.get("entry") is None or r.get("qty") is None:
+        return None
+    cost = r["entry"] * r["qty"] * 100
+    out = {"cost": round(cost)}
+    for k, (key, t) in TARGETS.items():
+        hit, stop = r.get(key), r.get("min20")
+        ret = t if hit is not None and (stop is None or hit < stop) else -S.C.STOP_LOSS if stop is not None else r.get("now")
+        if ret is None:
+            return None
+        out[k] = {"ret": round(ret, 3), "pnl": round(ret * cost)}
+    if r.get("best") is not None:
+        out["best"] = {"ret": r["best"], "pnl": round(r["best"] * cost)}
+    return out
 
 
 def load():
@@ -65,6 +84,10 @@ def main():
             rows = SA.analyze(d, sc, x15)
             checked.extend(rows)
             S.log.info("research: watchlist check %s, %d picks", d, len(rows))
+    for r in checked:                    # exit comparison from the day's scorecard
+        k = next((x for x in scored.get(r["date"], []) if x["ticker"] == r["ticker"] and x.get("label") == r.get("option")), None)
+        if k:
+            r["exits"] = exits(k)
     checked.sort(key=lambda r: (r["date"], r["alert"], r["ticker"]), reverse=True)
     save(res)
 
@@ -77,6 +100,8 @@ def main():
     while d <= end:
         if d.isoformat() not in logged and d in open_days:
             rows = ST.shadow_day(d, x15, daily)
+            for r in rows:
+                r["exits"] = exits(r)
             shadow.extend(rows)
             res["shadow_days"] = sorted(logged | {d.isoformat()})
             logged = set(res["shadow_days"])

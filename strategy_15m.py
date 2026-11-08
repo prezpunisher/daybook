@@ -25,6 +25,7 @@ import research_config as R
 import scanner as S
 
 BAR = timedelta(minutes=15)
+BT_TARGETS = {"3": 0.03, "5": 0.05, "10": 0.10}   # sell targets compared in the backtest
 
 
 def ind15(df):
@@ -135,8 +136,8 @@ def shadow_day(day, x15, daily):
                 sc = S.score_picks([{"ticker": t, "direction": s["direction"], "symbol": sym}], s["at"])
                 if sc:
                     k = sc[0]
-                    row.update({key: k[key] for key in ("label", "entry", "entry_time", "qty", "hit3", "hit5",
-                                                        "hit20", "min3", "min5", "min20", "best", "now",
+                    row.update({key: k[key] for key in ("label", "entry", "entry_time", "qty", "hit3", "hit5", "hit10",
+                                                        "hit20", "min3", "min5", "min10", "min20", "best", "now",
                                                         "result", "pnl")})
             out.append(row)
     return out
@@ -144,9 +145,10 @@ def shadow_day(day, x15, daily):
 
 # ---------------------------------------------------------------- backtest
 
-def _trade(call, spot, vol, dte, t0, bars, costs=True):
+def _trade(call, spot, vol, dte, t0, bars, costs=True, target=None):
     """Walk 5m candles after the signal. Buy at the estimated ask (+ slippage + commission), sell when the
-    estimated bid gets +TAKE_PROFIT or -STOP_LOSS, else at EXIT_CT. Returns (net return, $ pnl, qty)."""
+    estimated bid gets +target (default TAKE_PROFIT) or -STOP_LOSS, else at EXIT_CT. Returns (net return, $ pnl, qty)."""
+    target = C.TAKE_PROFIT if target is None else target
     years = lambda ts: max(dte - (ts - t0).total_seconds() / 86400, 1e-4) / 365
     half = R.SPREAD_PCT / 2 + R.SLIPPAGE_PCT if costs else 0.0
     fee = R.COMMISSION_PER_CONTRACT / 100 if costs else 0.0
@@ -163,8 +165,8 @@ def _trade(call, spot, vol, dte, t0, bars, costs=True):
             if r <= -C.STOP_LOSS:
                 ret = r if px == b["Open"] else -C.STOP_LOSS
                 break
-            if r >= C.TAKE_PROFIT:
-                ret = C.TAKE_PROFIT
+            if r >= target:
+                ret = target
                 break
         if ret is not None:
             break
@@ -216,11 +218,17 @@ def backtest():
                 after = bars_day[bars_day.index >= s["at"]]
                 if after.empty:
                     continue
-                res = _trade(call, s["close"], vol, S.weekly_dte(day), s["at"], after)
+                args = (call, s["close"], vol, S.weekly_dte(day), s["at"], after)
+                res = _trade(*args)
                 if res is None:
                     continue
-                free = _trade(call, s["close"], vol, S.weekly_dte(day), s["at"], after, costs=False)
-                trades.append({"ret0": free[0], "pnl0": free[1], "ticker": t, "date": day.isoformat(), "time": s["time"], "direction": s["direction"],
+                free = _trade(*args, costs=False)
+                more = {}
+                for key, tgt in BT_TARGETS.items():
+                    r_ = _trade(*args, target=tgt)
+                    r0 = _trade(*args, costs=False, target=tgt)
+                    more.update({f"ret_{key}": r_[0], f"pnl_{key}": r_[1], f"ret0_{key}": r0[0], f"pnl0_{key}": r0[1]})
+                trades.append({**more, "ret0": free[0], "pnl0": free[1], "ticker": t, "date": day.isoformat(), "time": s["time"], "direction": s["direction"],
                                "ret": res[0], "pnl": res[1], "cci_strong": s["cci_strong"],
                                "trend": bool(p["bias"] == (1 if call else -1))})
     trades.sort(key=lambda t: (t["date"], t["time"]))
@@ -232,7 +240,17 @@ def backtest():
                 "Calls only": [t for t in trades if t["direction"] == "CALLS"],
                 "Puts only": [t for t in trades if t["direction"] == "PUTS"],
                 "All signals, no spread/slippage/commission": [{**t, "ret": t["ret0"], "pnl": t["pnl0"]} for t in trades]}
-    return {"ran": datetime.now(S.CT).isoformat(timespec="minutes"), "days": days,
+    # the same signals with each sell target, with and without trading costs
+    by_target = []
+    for k in BT_TARGETS:
+        for label, sub in variants.items():
+            if "no spread" in label:
+                continue
+            by_target.append({"target": k, "costs": True, "name": label,
+                              **metrics([{**t, "ret": t[f"ret_{k}"], "pnl": t[f"pnl_{k}"]} for t in sub])})
+        by_target.append({"target": k, "costs": False, "name": "All signals",
+                          **metrics([{**t, "ret": t[f"ret0_{k}"], "pnl": t[f"pnl0_{k}"]} for t in trades])})
+    return {"ran": datetime.now(S.CT).isoformat(timespec="minutes"), "days": days, "by_target": by_target,
             "from": trades[0]["date"] if trades else None, "to": trades[-1]["date"] if trades else None,
             "costs": {"spread": R.SPREAD_PCT, "slippage": R.SLIPPAGE_PCT, "commission": R.COMMISSION_PER_CONTRACT},
             "variants": [{"name": k, **metrics(v)} for k, v in variants.items()],

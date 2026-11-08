@@ -91,6 +91,7 @@ h2 .meta { font-weight: 400; color: var(--text-muted); font-size: 13px; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
 th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { color: var(--text-muted); font-weight: 500; font-size: 13px; }
+tr.sel td, td.selc { background: var(--mid); }
 tr:last-child td { border-bottom: 0; }
 td.r, th.r { text-align: right; }
 .rules { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -116,6 +117,8 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 .decide .bar { height: 8px; background: var(--mid); border-radius: 99px; margin: 8px 0 4px; overflow: hidden; }
 .decide .bar span { display: block; height: 100%; background: var(--text-primary); }
 details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; margin: 12px 0 8px; }
+.sellbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
+  background: var(--surface-0); padding: 10px 0; margin-top: 8px; border-bottom: 1px solid var(--border); }
 .tag { font-size: 12px; padding: 1px 6px; border-radius: 5px; background: var(--mid); color: var(--text-secondary); }
 </style>
 </head>
@@ -131,11 +134,15 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
     </div>
   </header>
   <p class="note">Research only. Nothing on this page sends a push or changes the 8:45 watchlist. It updates once a day after the close.</p>
+  <div class="sellbar"><b>Sell at</b> <span class="seg" id="tgtSeg"><button data-v="3" class="on">+3%</button><button data-v="5">+5%</button><button data-v="10">+10%</button><button data-v="best">Best price (hindsight)</button></span>
+    <span class="note" style="margin:0" id="tgtNote"></span></div>
 
   <h2>Watchlist 15m check <span class="meta">why picks fail</span></h2>
   <p class="lead">For every watchlist pick: the stock's 15-minute EMA50, MACD (12/26/9) and CCI (20) on the last candle that closed before the 8:45 push. If losers keep showing up when the three don't agree, that check could become a filter.</p>
   <div class="decide" id="decide"></div>
   <div class="tiles" id="wcTiles"></div>
+  <h2 style="margin-top:24px">Sell target comparison <span class="meta" id="wcCmpMeta"></span></h2>
+  <div id="wcCmp"></div>
   <h2 style="margin-top:24px">Each reading at the push <span class="meta">trades where it was true vs. not</span></h2>
   <div id="wcSplit"></div>
   <h2 style="margin-top:24px">Every pick <span class="meta" id="wcMeta"></span> <span class="seg" id="wcSeg"><button data-v="10" class="on">Last 10 days</button><button data-v="all">All</button><button data-v="lost">Losers</button></span></h2>
@@ -144,6 +151,8 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
   <h2>15m EMA50 + MACD + CCI strategy <span class="tag">shadow</span> <span class="meta">signals logged and scored, never pushed</span></h2>
   <p class="lead" id="shLead"></p>
   <div class="tiles" id="shTiles"></div>
+  <h2 style="margin-top:24px">Sell target comparison <span class="meta" id="shCmpMeta"></span></h2>
+  <div id="shCmp"></div>
   <h2 style="margin-top:24px">Breakdown</h2>
   <div id="shSplit"></div>
   <h2 style="margin-top:24px">Signals <span class="meta" id="shMeta"></span> <span class="seg" id="shSeg"><button data-v="10" class="on">Last 10 days</button><button data-v="all">All</button></span></h2>
@@ -151,10 +160,11 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
 
   <h2>Backtest <span class="meta" id="btMeta"></span></h2>
   <p class="lead" id="btLead"></p>
-  <div id="btRows"></div>
-  <details><summary>By ticker</summary><div id="btTick"></div></details>
+  <div id="btCmp"></div>
+  <div id="btRows" style="margin-top:12px"></div>
+  <details><summary>By ticker (selling at +3%)</summary><div id="btTick"></div></details>
 
-  <footer>Data: Yahoo Finance (15-minute stock candles, 1-minute option trades). Same exit rules as the watchlist: +3% / −20% on the option, out by 2:50 CT, $1,000 max per trade.</footer>
+  <footer>Data: Yahoo Finance (15-minute stock candles, 1-minute option trades). Same exit rules as the watchlist: sell target / −20% on the option, out by 2:50 CT. Trade size: as many whole contracts as fit under $1,000 (at least 1), so most trades are under $1,000. Dollar results are on what was actually spent.</footer>
 </main>
 <script>
 const TZ = "America/Chicago";
@@ -166,7 +176,18 @@ const pctc = (v, d = 0) => v == null ? "—" : `<span class="${v >= 0 ? "pos" : 
 const tile = (v, l) => `<div class="tile"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`;
 const yn = (v, good = true) => v == null ? '<span class="muted">—</span>' : v ? `<span class="${good ? "pos" : "neg"}">✓</span>` : `<span class="${good ? "neg" : "pos"}">✗</span>`;
 const mk = (v, f) => v ? `<span class="pos">${esc(f)}</span>` : '<span class="muted">—</span>';
-let data = null, wcView = "10", shView = "10";
+let data = null, wcView = "10", shView = "10", tgt = "3";
+const TGT = { "3": "+3%", "5": "+5%", "10": "+10%", best: "best price" };
+// re-score rows for the chosen sell target (exits are precomputed per trade by research.py)
+const at = (rows, k = tgt) => rows.filter(r => r.exits && r.exits[k]).map(r => ({ ...r, pnl: r.exits[k].pnl, won: r.exits[k].pnl > 0 }));
+const cell$ = (r, k) => r.exits && r.exits[k] ? money(r.exits[k].pnl) : '<span class="muted">—</span>';
+function cmpTable(groups) {            // groups: [[label, rows]]
+  return `<div class="card"><table><thead><tr><th>Sell at</th>${groups.map(g => `<th>${esc(g[0])}</th>`).join("")}</tr></thead><tbody>${["3", "5", "10", "best"].map(k =>
+    `<tr class="${k === tgt ? "sel" : ""}"><td>${k === "best" ? "Best price <span class='muted'>(hindsight)</span>" : TGT[k] + " <span class='muted'>or −20% / 2:50</span>"}</td>${groups.map(g => {
+      const st = stats(at(g[1], k)); return `<td>${statCell(st)}${st.n ? ` <span class="muted">· ${money(st.pnl / st.n)}/trade</span>` : ""}</td>`;
+    }).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+const avgCost = rows => { const c = rows.filter(r => r.exits).map(r => r.exits.cost); return c.length ? Math.round(c.reduce((a, b) => a + b, 0) / c.length) : null; };
 
 function stats(rows, pnlKey = "pnl", wonFn = r => r.won) {
   const n = rows.length, w = rows.filter(wonFn).length, pnl = rows.reduce((a, r) => a + (r[pnlKey] || 0), 0);
@@ -196,23 +217,25 @@ function why(r) {
 }
 
 function renderWatchlist() {
-  const rows = data.watchlist_check || [];
-  const days = [...new Set(rows.map(r => r.date))];
+  const raw = data.watchlist_check || [], rows = at(raw);
+  const days = [...new Set(raw.map(r => r.date))];
   const need = (data.settings || {}).decision_days || 20;
   const all3 = stats(rows.filter(r => r.all3_ok)), notAll = stats(rows.filter(r => !r.all3_ok));
   $("decide").innerHTML = `<b>${days.length} of ${need} trading days tracked</b><div class="bar"><span style="width:${Math.min(100, 100 * days.length / need)}%"></span></div>
     <div class="note" style="margin:0">At ${need} days: if picks where all three agree keep winning about 90% of the time and make money while the others lose, add it as a filter on the 8:45 list. Until then the live watchlist doesn't change.</div>`;
-  $("wcTiles").innerHTML = tile(statCell(all3).split(" · ")[0], "won when all three agreed") + tile(money(all3.pnl), "P&L when all three agreed") +
+  $("wcTiles").innerHTML = tile(statCell(all3).split(" · ")[0], `won when all three agreed, selling at ${TGT[tgt]}`) + tile(money(all3.pnl), "P&L when all three agreed") +
     tile(statCell(notAll).split(" · ")[0], "won when they didn't") + tile(money(notAll.pnl), "P&L when they didn't");
+  $("wcCmpMeta").textContent = `${raw.length} picks · average trade $${(avgCost(raw) || 0).toLocaleString()}`;
+  $("wcCmp").innerHTML = cmpTable([["All picks", raw], ["All three agree", raw.filter(r => r.all3_ok)], ["Not all three", raw.filter(r => !r.all3_ok)]]);
   $("wcSplit").innerHTML = splitTable(rows, [["all3_ok", "All three agree with the trade"], ["macd_ok", "MACD on the trade's side of its signal"],
     ["ema_ok", "Price on the trade's side of EMA50"], ["cci_ok", "CCI on the trade's side of 0"], ["cci_strong", "CCI past ±100"],
     ["fresh_cross", "MACD crossed our way in the last hour"], ["cross_against_1h", "MACD crossed against us in the last hour"]]);
   const shown = lastDays(rows, wcView);
   $("wcMeta").textContent = `${shown.length} picks`;
-  $("wcRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">Result</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
+  $("wcRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.alert)}</span></td>
       <td>${r.dir === "C" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted">${esc(r.option || "")}</span></td>
-      <td class="r">${r.won ? "✅" : "❌"} ${money(r.pnl)}</td>
+      ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}
       <td>${yn(r.ema_ok)}</td><td>${yn(r.macd_ok)}${r.cross_against_1h ? ' <span class="neg" title="crossed against in the last hour">↺</span>' : ""}</td>
       <td class="r">${r.cci > 0 ? "+" : ""}${r.cci}</td><td>${yn(r.all3_ok)}</td>
       <td class="hide-sm ${r.won ? "muted" : ""}">${esc(why(r))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No scored picks yet.</div>`;
@@ -220,20 +243,21 @@ function renderWatchlist() {
 
 function renderShadow() {
   const all = data.shadow || [];
-  const scored = all.filter(r => r.result != null);
-  const won = r => r.result > 0;
+  const scored = at(all);
   const days = (data.shadow_days || []).length;
   const st = data.settings || {};
   $("shLead").innerHTML = `CALL when a closed 15-minute candle is above EMA${st.ema || 50}, MACD crosses above its signal on that candle and CCI is above 0; PUT is the mirror. Checked from ${esc(st.first || "8:45")} to ${esc(st.last || "2:15")} CT on ${(st.tickers || []).length} liquid names. Each signal is scored on its weekly ATM option's real 1-minute trades from the candle's close.`;
-  const s = stats(scored, "pnl", won), liquid = stats(scored.filter(r => !r.thin), "pnl", won);
-  $("shTiles").innerHTML = tile(`${all.length}`, `signals over ${days} trading days`) + tile(s.n ? `${Math.round(100 * s.w / s.n)}%` : "—", "won (+3% before −20%)") +
-    tile(money(s.pnl), "P&L, $1,000 max each") + tile(s.pf != null ? s.pf.toFixed(2) : "—", "profit factor");
-  const rows = scored.map(r => ({ ...r, won: won(r), trend: r.daily_trend_agrees, liquid: !r.thin, isCall: r.direction === "CALLS" }));
+  const s = stats(scored);
+  $("shTiles").innerHTML = tile(`${all.length}`, `signals over ${days} trading days`) + tile(s.n ? `${Math.round(100 * s.w / s.n)}%` : "—", tgt === "best" ? "in profit at the best price" : `won (${TGT[tgt]} before −20%)`) +
+    tile(money(s.pnl), "P&L, up to $1,000 a trade") + tile(s.pf != null ? s.pf.toFixed(2) : "—", "profit factor");
+  const rows = scored.map(r => ({ ...r, trend: r.daily_trend_agrees, liquid: !r.thin, isCall: r.direction === "CALLS" }));
+  $("shCmpMeta").textContent = `${scored.length} scored signals · average trade $${(avgCost(all) || 0).toLocaleString()}`;
+  $("shCmp").innerHTML = cmpTable([["All signals", all], ["CCI past ±100", all.filter(r => r.cci_strong)], ["Daily trend agrees", all.filter(r => r.daily_trend_agrees)]]);
   $("shSplit").innerHTML = splitTable(rows, [["trend", "Daily trend agrees (same as the watchlist's)"], ["cci_strong", "CCI past ±100"],
     ["liquid", `Option traded ${"500+"} contracts that day`], ["isCall", "Call (vs. put)"]]);
   const shown = lastDays(all, shView);
   $("shMeta").textContent = `${shown.length} signals`;
-  $("shRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">−20%</th><th class="r">Result</th></tr></thead><tbody>${shown.map(r => `<tr>
+  $("shRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r hide-sm">+3% at</th><th class="r hide-sm">−20% at</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.time)}</span></td>
       <td>${r.direction === "CALLS" ? '<span class="pos">▲ CALL</span>' : '<span class="neg">▼ PUT</span>'} <b>${esc(r.ticker)}</b></td>
       <td>${r.symbol ? `<a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}/" target="_blank" rel="noopener">${esc(r.label || r.symbol)}</a>` : '<span class="muted">not found</span>'}</td>
@@ -241,9 +265,9 @@ function renderShadow() {
       <td class="hide-sm">${yn(r.daily_trend_agrees)}</td>
       <td class="r">${r.cci > 0 ? "+" : ""}${r.cci}${r.cci_strong ? " ★" : ""}</td>
       <td class="r">${r.entry != null ? `$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span>` : "—"}</td>
-      <td class="r">${r.hit3 ? `<span class="pos">${esc(r.hit3)} (${r.min3}m)</span>` : '<span class="muted">—</span>'}</td>
-      <td class="r">${r.hit20 ? `<span class="neg">${esc(r.hit20)}</span>` : '<span class="muted">—</span>'}</td>
-      <td class="r">${r.result != null ? `${r.result > 0 ? "✅" : "❌"} ${money(r.pnl)}` : '<span class="muted">no data</span>'}</td></tr>`).join("")}</tbody></table></div>
+      <td class="r hide-sm">${r.hit3 ? `<span class="pos">${esc(r.hit3)} (${r.min3}m)</span>` : '<span class="muted">—</span>'}</td>
+      <td class="r hide-sm">${r.hit20 ? `<span class="neg">${esc(r.hit20)}</span>` : '<span class="muted">—</span>'}</td>
+      ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
       <p class="note">★ = CCI past ±100. Bought = first option trade after the signal candle closed. Opt vol in red = under 500 contracts that day (hard to get in and out).</p>` : `<div class="empty">No signals logged yet.</div>`;
 }
 
@@ -257,12 +281,21 @@ function renderBacktest() {
     <td class="r">${pctc(v.avg_return, 1)}</td><td class="r">${v.trades ? money(v.total_pnl) : "—"}</td><td class="r">${v.profit_factor ?? "—"}</td>
     <td class="r hide-sm">${v.max_drawdown != null ? "$" + v.max_drawdown.toLocaleString() : "—"}</td><td class="r hide-sm">${v.trades ? `${money(v.avg_win)} / ${money(v.avg_loss)}` : "—"}</td><td class="r hide-sm">${v.risk_reward ?? "—"}</td></tr>`;
   const head = first => `<thead><tr><th>${first}</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Avg return</th><th class="r">Total</th><th class="r">Profit factor</th><th class="r hide-sm">Max drawdown</th><th class="r hide-sm">Avg win / loss</th><th class="r hide-sm">Reward:risk</th></tr></thead>`;
-  $("btRows").innerHTML = `<div class="card"><table>${head("Variant")}<tbody>${b.variants.map(row).join("")}</tbody></table></div>`;
+  const bt = b.by_target || [], k = tgt === "best" ? "3" : tgt;
+  const btCell = v => v && v.trades ? `${Math.round(v.win_rate * 100)}% won · ${money(v.total_pnl)} <span class="muted">· PF ${v.profit_factor ?? "—"}</span>` : "—";
+  const find = (t, name, costs = true) => bt.find(v => v.target === t && v.name === name && v.costs === costs);
+  $("btCmp").innerHTML = bt.length ? `<div class="card"><table><thead><tr><th>Sell at</th><th>All signals</th><th>Daily trend agrees</th><th class="hide-sm">CCI past ±100</th><th>All signals, no trading costs</th></tr></thead><tbody>${["3", "5", "10"].map(t =>
+    `<tr class="${t === k ? "sel" : ""}"><td>${TGT[t]} <span class="muted">or −20% / 2:50</span></td><td>${btCell(find(t, "All signals"))}</td><td>${btCell(find(t, "Daily trend agrees"))}</td><td class="hide-sm">${btCell(find(t, "CCI past ±100"))}</td><td>${btCell(find(t, "All signals", false))}</td></tr>`).join("")}</tbody></table></div>
+    <p class="note">PF = profit factor (dollars won ÷ dollars lost; above 1 makes money). "Best price" can't be backtested honestly, so the backtest stops at +10%.</p>` : "";
+  const sel = bt.length ? bt.filter(v => v.target === k && v.costs).concat(bt.filter(v => v.target === k && !v.costs).map(v => ({ ...v, name: "All signals, no trading costs" }))) : b.variants;
+  $("btRows").innerHTML = `<p class="note" style="margin:0 0 8px">Selling at ${TGT[k]}:</p><div class="card"><table>${head("Variant")}<tbody>${sel.map(row).join("")}</tbody></table></div>`;
   $("btTick").innerHTML = `<div class="card"><table>${head("Ticker")}<tbody>${(b.by_ticker || []).map(v => row({ ...v, name: v.ticker })).join("")}</tbody></table></div>`;
 }
 
 function render() {
   $("sub").textContent = data.updated ? `Updated ${new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(data.updated))} CT` : "No research run yet";
+  $("tgtNote").textContent = tgt === "best" ? "Selling at the option's highest trade of the day: the most you could have made, not a rule you could follow." :
+    `Every result below assumes you sell at ${TGT[tgt]}, or at −20%, or at 2:50 CT, whichever comes first.`;
   renderWatchlist(); renderShadow(); renderBacktest();
 }
 function seg(id, set) {
@@ -270,7 +303,7 @@ function seg(id, set) {
     $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); set(b.dataset.v); render();
   });
 }
-seg("wcSeg", v => wcView = v); seg("shSeg", v => shView = v);
+seg("wcSeg", v => wcView = v); seg("shSeg", v => shView = v); seg("tgtSeg", v => tgt = v);
 fetch("research.json?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(d => { data = d || {}; render(); });
 </script>
 </body>

@@ -37,7 +37,7 @@ jobs:
         run: |
           git config user.name "scanner-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/research.json
+          git add docs/research.json research_data
           git diff --cached --quiet && exit 0
           git commit -m "research: $(date -u +%FT%TZ)"
           for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 10; done

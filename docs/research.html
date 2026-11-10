@@ -124,6 +124,15 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 .filters button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border);
   background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
 .fsum { font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; }
+details.more { margin-top: 12px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 0 16px; }
+details.more > summary { list-style: none; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--text-primary); margin: 0; padding: 12px 0;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::before { content: "▸"; color: var(--text-muted); width: 10px; }
+details.more[open] > summary::before { content: "▾"; }
+details.more[open] { padding-bottom: 14px; }
+details.more .card { border: 0; padding: 0; }
+.stopcmp { margin-top: 12px; }
 details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; margin: 12px 0 8px; }
 .sellbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
   background: var(--surface-0); padding: 10px 0; margin-top: 8px; border-bottom: 1px solid var(--border); }
@@ -149,26 +158,29 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
   <p class="lead">For every watchlist pick: the stock's 15-minute EMA50, MACD (12/26/9) and CCI (20) on the last candle that closed before the 8:45 push. If losers keep showing up when the three don't agree, that check could become a filter.</p>
   <div class="decide" id="decide"></div>
   <div class="tiles" id="wcTiles"></div>
-  <h2 style="margin-top:24px">Each reading at the push <span class="meta">trades where it was true vs. not</span></h2>
-  <div id="wcSplit"></div>
-  <h2 style="margin-top:24px">Every pick <span class="meta" id="wcMeta"></span></h2>
-  <div class="filters" id="wcFilters"></div>
-  <div id="wcRows"></div>
+  <div id="wcStop"></div>
+  <details class="more" data-key="wcSplit"><summary>Each reading at the push <span class="meta">trades where it was true vs. not</span></summary>
+    <div id="wcSplit"></div></details>
+  <details class="more" data-key="wcRows"><summary>Every pick <span class="meta" id="wcMeta"></span></summary>
+    <div class="filters" id="wcFilters"></div>
+    <div id="wcRows"></div></details>
 
   <h2>15m EMA50 + MACD + CCI strategy <span class="tag">shadow</span> <span class="meta">signals logged and scored, never pushed</span></h2>
   <p class="lead" id="shLead"></p>
   <div class="tiles" id="shTiles"></div>
-  <h2 style="margin-top:24px">Breakdown</h2>
-  <div id="shSplit"></div>
-  <h2 style="margin-top:24px">Signals <span class="meta" id="shMeta"></span></h2>
-  <div class="filters" id="shFilters"></div>
-  <div id="shRows"></div>
+  <div id="shStop"></div>
+  <details class="more" data-key="shSplit"><summary>Breakdown</summary>
+    <div id="shSplit"></div></details>
+  <details class="more" data-key="shRows"><summary>Signals <span class="meta" id="shMeta"></span></summary>
+    <div class="filters" id="shFilters"></div>
+    <div id="shRows"></div></details>
 
   <h2>Backtest <span class="meta" id="btMeta"></span></h2>
-  <p class="lead" id="btLead"></p>
   <div id="btCmp"></div>
-  <div id="btRows" style="margin-top:12px"></div>
-  <details><summary>By ticker (selling at +3%)</summary><div id="btTick"></div></details>
+  <details class="more" data-key="btRows"><summary>How it was tested, and every variant</summary>
+    <p class="lead" id="btLead"></p>
+    <div id="btRows"></div></details>
+  <details class="more" data-key="btTick"><summary>By ticker <span class="meta">selling at +3%</span></summary><div id="btTick"></div></details>
 
   <footer>Data: Yahoo Finance (15-minute stock candles, 1-minute option trades). Same exit rules as the watchlist: sell target / −20% on the option, out by 2:50 CT. Trade size: as many whole contracts as fit under $1,000 (at least 1), so most trades are under $1,000. Dollar results are on what was actually spent.</footer>
 </main>
@@ -188,7 +200,7 @@ const YN = [["", "Any"], ["y", "Yes"], ["n", "No"]];
 const yesNo = f => (r, v) => (v === "y") === (f(r) === true);
 const dirOf = r => (r.dir || (r.direction === "CALLS" ? "C" : "P"));
 const COMMON = [
-  ["range", "Days", [["10", "Last 10 days"], ["5", "Last 5 days"], ["all", "All days"]], null],
+  ["range", "Days", [["30", "Last 30 trading days"], ["5", "Last 5 trading days"], ["week", "This trading week"]], null],
   ["day", "Day", rows => [["", "Any"], ...[...new Set(rows.map(r => r.date))].map(d => [d, fmtDay(d)])], (r, v) => r.date === v],
   ["ticker", "Ticker", rows => [["", "Any"], ...[...new Set(rows.map(r => r.ticker))].sort().map(t => [t, t])], (r, v) => r.ticker === v],
   ["dir", "Direction", [["", "Any"], ["C", "Calls"], ["P", "Puts"]], (r, v) => dirOf(r) === v],
@@ -200,8 +212,10 @@ const FILTERS = {
        ["ema", "Price vs EMA50 with trade", YN, yesNo(r => r.ema_ok)]],
   sh: [...COMMON, ["trend", "Daily trend agrees", YN, yesNo(r => r.daily_trend_agrees)], ["liquid", "Option 500+ volume", YN, yesNo(r => !r.thin)]],
 };
-const fstate = { wc: { range: "10" }, sh: { range: "10" } };
+const RANGES = ["30", "5", "week"];
+const fstate = { wc: { range: "30" }, sh: { range: "30" } };
 try { Object.assign(fstate, JSON.parse(localStorage.getItem("researchFilters") || "{}")); } catch (e) {}
+for (const k of ["wc", "sh"]) if (!RANGES.includes(fstate[k].range)) fstate[k].range = "30";   // older saved choices
 function applyFilters(key, rows) {
   const st = fstate[key];
   let out = rows;
@@ -213,21 +227,33 @@ function filterBar(key, rows) {
   const st = fstate[key];
   const html = FILTERS[key].map(([k, label, opts]) => {
     const list = typeof opts === "function" ? opts(rows) : opts;
-    const on = st[k] && !(k === "range" && st[k] === "10");
+    const on = st[k] && !(k === "range" && st[k] === "30");
     return `<label>${esc(label)} <select data-k="${k}" class="${on ? "set" : ""}">${list.map(([v, t]) => `<option value="${esc(v)}"${(st[k] || "") === v ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`;
   }).join("") + `<button data-reset>Reset</button>`;
   $(key + "Filters").innerHTML = html;
   $(key + "Filters").querySelectorAll("select").forEach(el => el.onchange = () => { st[el.dataset.k] = el.value; saveFilters(); render(); });
-  $(key + "Filters").querySelector("[data-reset]").onclick = () => { fstate[key] = { range: "10" }; saveFilters(); render(); };
+  $(key + "Filters").querySelector("[data-reset]").onclick = () => { fstate[key] = { range: "30" }; saveFilters(); render(); };
 }
 function saveFilters() { try { localStorage.setItem("researchFilters", JSON.stringify(fstate)); } catch (e) {} }
 function fsum(rows) {
   const st = stats(rows.filter(r => r.won != null));
-  return `<p class="fsum">Showing ${rows.length} · ${statCell(st)} selling at ${TGT[tgt]}</p>`;
+  const s15 = stats(rows.filter(r => r.exits15 && r.exits15[tgt]).map(r => ({ ...r, pnl: r.exits15[tgt].pnl, won: r.exits15[tgt].pnl > 0 })));
+  const s20 = stats(rows.filter(r => r.exits15 && r.exits15[tgt] && r.won != null));
+  return `<p class="fsum">Showing ${rows.length} · ${statCell(st)} selling at ${TGT[tgt]}${s15.n ? ` · on the ${s15.n} with minute prices: −20% ${money(s20.pnl)} vs −15% ${money(s15.pnl)}` : ""}</p>`;
 }
 const TGT = { "3": "+3%", "5": "+5%", "10": "+10%", best: "best price" };
 // re-score rows for the chosen sell target (exits are precomputed per trade by research.py)
 const at = (rows, k = tgt) => rows.filter(r => r.exits && r.exits[k]).map(r => ({ ...r, pnl: r.exits[k].pnl, won: r.exits[k].pnl > 0 }));
+const at15 = (rows, k = tgt) => rows.filter(r => r.exits15 && r.exits15[k]).map(r => ({ ...r, pnl: r.exits15[k].pnl, won: r.exits15[k].pnl > 0 }));
+function stopTable(groups, total) {    // groups: [[label, raw rows]]; both exits on the same trades (those with minute prices)
+  const n = groups[groups.length - 1][1].filter(r => r.exits15).length;   // last group = all trades
+  if (!n) return `<p class="note">−15% way out: minute prices are saved from Nov 5 on, so this fills in as new days come in.</p>`;
+  return `<div class="card stopcmp"><table><thead><tr><th>Way out at</th>${groups.map(g => `<th>${esc(g[0])}</th>`).join("")}</tr></thead><tbody>
+    ${[["−20% (live rule)", r => at(r.filter(x => x.exits15))], ["−15%", r => at15(r)]].map(([label, f]) =>
+      `<tr><td>${label}</td>${groups.map(g => `<td>${statCell(stats(f(g[1])))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <p class="note">Selling at ${TGT[tgt]}, both on the same ${n} of ${total} trades: the ones whose option minute prices were saved (Nov 5 on; Yahoo drops them once an option expires).</p>`;
+}
+const cell15 = r => r.exits15 && r.exits15[tgt] ? money(r.exits15[tgt].pnl) : '<span class="muted">—</span>';
 const cell$ = (r, k) => r.exits && r.exits[k] ? money(r.exits[k].pnl) : '<span class="muted">—</span>';
 
 function stats(rows, pnlKey = "pnl", wonFn = r => r.won) {
@@ -242,10 +268,16 @@ function splitTable(rows, factors, wonFn) {
     return `<tr><td>${esc(label)}</td><td>${statCell(stats(y, "pnl", wonFn))}</td><td>${statCell(stats(n, "pnl", wonFn))}</td></tr>`;
   }).join("")}</tbody></table></div>`;
 }
+function weekStart() {                 // Monday of the current week, CT, as YYYY-MM-DD
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" })
+    .formatToParts(new Date()).map(x => [x.type, x.value]));
+  const back = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 }[p.weekday];
+  const d = new Date(Date.UTC(+p.year, +p.month - 1, +p.day - back));
+  return d.toISOString().slice(0, 10);
+}
 function lastDays(rows, view) {
-  if (view === "all") return rows;
-  if (view === "lost") return rows.filter(r => !r.won);
-  const days = [...new Set(rows.map(r => r.date))].slice(0, +view);
+  if (view === "week") { const from = weekStart(); return rows.filter(r => r.date >= from); }
+  const days = [...new Set(rows.map(r => r.date))].sort().reverse().slice(0, +view);
   return rows.filter(r => days.includes(r.date));
 }
 function why(r) {
@@ -269,13 +301,15 @@ function renderWatchlist() {
   $("wcSplit").innerHTML = splitTable(rows, [["all3_ok", "All three agree with the trade"], ["macd_ok", "MACD on the trade's side of its signal"],
     ["ema_ok", "Price on the trade's side of EMA50"], ["cci_ok", "CCI on the trade's side of 0"], ["cci_strong", "CCI past ±100"],
     ["fresh_cross", "MACD crossed our way in the last hour"], ["cross_against_1h", "MACD crossed against us in the last hour"]]);
+  $("wcStop").innerHTML = stopTable([["All three agree", raw.filter(r => r.all3_ok)], ["Not all three", raw.filter(r => !r.all3_ok)], ["All picks", raw]], raw.length);
   filterBar("wc", rows);
   const shown = applyFilters("wc", rows);
   $("wcMeta").textContent = `${shown.length} of ${rows.length} picks`;
-  $("wcRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
+  $("wcRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th class="r" title="Selling at the chosen target, way out at −15% instead of −20%">${TGT[tgt]} / −15%</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.alert)}</span></td>
       <td>${r.dir === "C" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted">${esc(r.option || "")}</span></td>
       ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}
+      <td class="r">${cell15(r)}</td>
       <td>${yn(r.ema_ok)}</td><td>${yn(r.macd_ok)}${r.cross_against_1h ? ' <span class="neg" title="crossed against in the last hour">↺</span>' : ""}</td>
       <td class="r">${r.cci > 0 ? "+" : ""}${r.cci}</td><td>${yn(r.all3_ok)}</td>
       <td class="hide-sm ${r.won ? "muted" : ""}">${esc(why(r))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">${rows.length ? "No picks match these filters." : "No scored picks yet."}</div>`;
@@ -294,10 +328,11 @@ function renderShadow() {
   $("shSplit").innerHTML = splitTable(rows, [["trend", "Daily trend agrees (same as the watchlist's)"], ["cci_strong", "CCI past ±100"],
     ["liquid", `Option traded ${"500+"} contracts that day`], ["isCall", "It was a call (Not true = it was a put)"]]);
   const allT = all.map(r => r.exits && r.exits[tgt] ? { ...r, pnl: r.exits[tgt].pnl, won: r.exits[tgt].pnl > 0 } : r);
+  $("shStop").innerHTML = stopTable([["CCI past ±100", all.filter(r => r.cci_strong)], ["Without", all.filter(r => !r.cci_strong)], ["All signals", all]], all.length);
   filterBar("sh", allT);
   const shown = applyFilters("sh", allT);
   $("shMeta").textContent = `${shown.length} of ${all.length} signals`;
-  $("shRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r hide-sm">+3% at</th><th class="r hide-sm">−20% at</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th></tr></thead><tbody>${shown.map(r => `<tr>
+  $("shRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r hide-sm">+3% at</th><th class="r hide-sm">−20% at</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th class="r" title="Selling at the chosen target, way out at −15% instead of −20%">${TGT[tgt]} / −15%</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.time)}</span></td>
       <td>${r.direction === "CALLS" ? '<span class="pos">▲ CALL</span>' : '<span class="neg">▼ PUT</span>'} <b>${esc(r.ticker)}</b></td>
       <td>${r.symbol ? `<a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}/" target="_blank" rel="noopener">${esc(r.label || r.symbol)}</a>` : '<span class="muted">not found</span>'}</td>
@@ -307,7 +342,7 @@ function renderShadow() {
       <td class="r">${r.entry != null ? `$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span>` : "—"}</td>
       <td class="r hide-sm">${r.hit3 ? `<span class="pos">${esc(r.hit3)} (${r.min3}m)</span>` : '<span class="muted">—</span>'}</td>
       <td class="r hide-sm">${r.hit20 ? `<span class="neg">${esc(r.hit20)}</span>` : '<span class="muted">—</span>'}</td>
-      ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}<td class="r">${cell15(r)}</td></tr>`).join("")}</tbody></table></div>
       <p class="note">★ = CCI past ±100. Bought = first option trade after the signal candle closed. Opt vol in red = under 500 contracts that day (hard to get in and out).</p>` : `<div class="empty">${all.length ? "No signals match these filters." : "No signals logged yet."}</div>`;
 }
 
@@ -344,6 +379,10 @@ function seg(id, set) {
   });
 }
 seg("tgtSeg", v => tgt = v);
+document.querySelectorAll("details.more").forEach(d => {
+  try { d.open = localStorage.getItem("open:" + d.dataset.key) === "1"; } catch (e) {}
+  d.addEventListener("toggle", () => { try { localStorage.setItem("open:" + d.dataset.key, d.open ? "1" : "0"); } catch (e) {} });
+});
 fetch("research.json?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(d => { data = d || {}; render(); });
 </script>
 </body>

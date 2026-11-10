@@ -39,6 +39,16 @@ dashboard's Research page (`docs/research.html`). It never sends pushes and neve
 - **Backtest**: the same strategy over 60 days on estimated option prices with spread, slippage and commission,
   rerun weekly. TradingView version: `tradingview/ema50_macd_cci_15m.pine`.
 
+## Strategy Portfolio Dashboard (simulated, research only)
+`docs/portfolio.html`, built by `portfolio.py` (settings in `portfolio_config.py`) right after the daily research job.
+Four independent simulated $1,000 accounts: A every watchlist pick, B every 15m shadow signal, C watchlist picks where
+the 15m EMA50/MACD/CCI all agreed, D shadow PUTS that agree with the daily trend. Whole contracts that fit the free
+cash and the $1,000 cap, T+1 settlement (cash account), Robinhood's stock/ETF option fees ($0 commission plus
+regulatory fees), exits walked forward minute by minute. Prices are a proxy (1-minute last trades), not bid/ask.
+Forward paper trades start 2026-11-10 and are booked once per session (`research_data/portfolio_ledger.json`); a
+reconstructed historical replay is shown separately. It reads status.json / research.json and never changes them,
+sends nothing and places no orders. Tests: `.venv/bin/python -m unittest discover -s tests`.
+
 ## Legacy: RSI callouts (`STRATEGY = "rsi"`)
 RSI crosses 30/70, confirmed by EMA45, MACD 12/26/9 and Supertrend 7/3 within 5 candles. Backtested
 negative (`backtest.py`): the option hits +3% about 80% of the time, but the misses lose 35-45%.

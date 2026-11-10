@@ -292,7 +292,7 @@ function renderShadow() {
     tile(money(s.pnl), "P&L, up to $1,000 a trade") + tile(s.pf != null ? s.pf.toFixed(2) : "—", "profit factor");
   const rows = scored.map(r => ({ ...r, trend: r.daily_trend_agrees, liquid: !r.thin, isCall: r.direction === "CALLS" }));
   $("shSplit").innerHTML = splitTable(rows, [["trend", "Daily trend agrees (same as the watchlist's)"], ["cci_strong", "CCI past ±100"],
-    ["liquid", `Option traded ${"500+"} contracts that day`], ["isCall", "Call (vs. put)"]]);
+    ["liquid", `Option traded ${"500+"} contracts that day`], ["isCall", "It was a call (Not true = it was a put)"]]);
   const allT = all.map(r => r.exits && r.exits[tgt] ? { ...r, pnl: r.exits[tgt].pnl, won: r.exits[tgt].pnl > 0 } : r);
   filterBar("sh", allT);
   const shown = applyFilters("sh", allT);

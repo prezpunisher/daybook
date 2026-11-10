@@ -26,6 +26,8 @@ jobs:
       name: github-pages
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # full history: a test compares the Research page with an earlier version
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

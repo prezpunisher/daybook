@@ -137,6 +137,13 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
   <div class="sellbar"><b>Sell at</b> <span class="seg" id="tgtSeg"><button data-v="3" class="on">+3%</button><button data-v="5">+5%</button><button data-v="10">+10%</button><button data-v="best">Best price (hindsight)</button></span>
     <span class="note" style="margin:0" id="tgtNote"></span></div>
 
+  <h2>CCI past ±100 tracker <span class="meta" id="cciMeta"></span></h2>
+  <p class="lead">The finding from Nov 7: trades where the stock's 15-minute CCI was past +100 (calls) or −100 (puts) did better. It was found by looking at past trades, so the real test is the days after it. This section keeps those days separate.</p>
+  <div class="tiles" id="cciTiles"></div>
+  <div id="cciCmp" style="margin-top:12px"></div>
+  <h2 style="margin-top:24px">Day by day since the finding <span class="meta">selling at the target above</span></h2>
+  <div id="cciDays"></div>
+
   <h2>Watchlist 15m check <span class="meta">why picks fail</span></h2>
   <p class="lead">For every watchlist pick: the stock's 15-minute EMA50, MACD (12/26/9) and CCI (20) on the last candle that closed before the 8:45 push. If losers keep showing up when the three don't agree, that check could become a filter.</p>
   <div class="decide" id="decide"></div>
@@ -241,6 +248,32 @@ function renderWatchlist() {
       <td class="hide-sm ${r.won ? "muted" : ""}">${esc(why(r))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No scored picks yet.</div>`;
 }
 
+function renderCci() {
+  const from = (data.settings || {}).cci_track_from || "2026-11-09";
+  const sh = at(data.shadow || []), wl = at(data.watchlist_check || []);
+  const since = r => r.date >= from, strong = r => r.cci_strong === true;
+  const days = [...new Set([...data.shadow_days || [], ...wl.map(r => r.date)])].filter(d => d >= from).sort().reverse();
+  $("cciMeta").textContent = `${days.length} trading day${days.length === 1 ? "" : "s"} since ${fmtDay(from)}`;
+  const a = stats(sh.filter(r => since(r) && strong(r))), b = stats(sh.filter(r => since(r) && !strong(r)));
+  const pct = st => st.n ? `${Math.round(100 * st.w / st.n)}%` : "—";
+  $("cciTiles").innerHTML = tile(pct(a), `strategy signals with CCI ±100 won (${a.w}/${a.n})`) + tile(a.n ? money(a.pnl) : "—", "their P&L since the finding") +
+    tile(pct(b), `signals without it won (${b.w}/${b.n})`) + tile(b.n ? money(b.pnl) : "—", "their P&L since the finding");
+  const row = (label, rows) => `<tr><td>${label}</td><td>${statCell(stats(rows.filter(r => since(r) && strong(r))))}</td><td>${statCell(stats(rows.filter(r => since(r) && !strong(r))))}</td>
+    <td class="hide-sm muted">${statCell(stats(rows.filter(r => !since(r) && strong(r))))}</td><td class="hide-sm muted">${statCell(stats(rows.filter(r => !since(r) && !strong(r))))}</td></tr>`;
+  $("cciCmp").innerHTML = `<div class="card"><table><thead><tr><th></th><th>CCI ±100, since ${esc(fmtDay(from))}</th><th>Without, since</th><th class="hide-sm">CCI ±100, before</th><th class="hide-sm">Without, before</th></tr></thead>
+    <tbody>${row("15m strategy signals", sh)}${row("Watchlist picks", wl)}</tbody></table></div>
+    <p class="note">"Before" = the days the finding came from (Oct 26 – Nov 6). "Since" = new days only. If CCI ±100 keeps beating "without" in the since columns, the finding is holding up.</p>`;
+  let run = 0;
+  const rowsHtml = days.slice().reverse().map(d => {
+    const s1 = stats(sh.filter(r => r.date === d && strong(r))); run += s1.pnl;
+    return { d, html: `<td>${statCell(s1)}</td><td>${statCell(stats(sh.filter(r => r.date === d && !strong(r))))}</td>
+      <td class="hide-sm">${statCell(stats(wl.filter(r => r.date === d && strong(r))))}</td><td class="hide-sm">${statCell(stats(wl.filter(r => r.date === d && !strong(r))))}</td><td class="r">${money(run)}</td>` };
+  }).reverse();
+  $("cciDays").innerHTML = rowsHtml.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Strategy, CCI ±100</th><th>Strategy, without</th><th class="hide-sm">Watchlist, CCI ±100</th><th class="hide-sm">Watchlist, without</th><th class="r">Running total, strategy CCI ±100</th></tr></thead>
+    <tbody>${rowsHtml.map(x => `<tr><td>${esc(fmtDay(x.d))}</td>${x.html}</tr>`).join("")}</tbody></table></div>` :
+    `<div class="empty">The first day since the finding appears here after ${esc(fmtDay(from))}'s close.</div>`;
+}
+
 function renderShadow() {
   const all = data.shadow || [];
   const scored = at(all);
@@ -296,7 +329,7 @@ function render() {
   $("sub").textContent = data.updated ? `Updated ${new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(data.updated))} CT` : "No research run yet";
   $("tgtNote").textContent = tgt === "best" ? "Selling at the option's highest trade of the day: the most you could have made, not a rule you could follow." :
     `Every result below assumes you sell at ${TGT[tgt]}, or at −20%, or at 2:50 CT, whichever comes first.`;
-  renderWatchlist(); renderShadow(); renderBacktest();
+  renderCci(); renderWatchlist(); renderShadow(); renderBacktest();
 }
 function seg(id, set) {
   $(id).querySelectorAll("button").forEach(b => b.onclick = () => {

@@ -1,11 +1,13 @@
 name: Research
 
 # Side research, separate from the Daybook keeper: never sends pushes and never touches docs/status.json.
-# Runs after the close; it catches up on any missed day, so a late start doesn't matter.
+# Started by the Daybook keeper right after the 3:15 CT day review. GitHub's own schedule is unreliable, so the
+# crons are only a backup; each run catches up on any missed day and does nothing if it's up to date.
 on:
   schedule:
     - cron: "30 21 * * 1-5"     # 3:30 / 4:30 CT
     - cron: "0 3 * * 2-6"       # backup run overnight
+    - cron: "0 12 * * 2-6"      # backup run the next morning
   workflow_dispatch:
 
 permissions:

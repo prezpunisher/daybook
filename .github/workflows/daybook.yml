@@ -90,6 +90,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run daybook.yml -R "$GITHUB_REPOSITORY" -f keeper=true
+      - name: Start the research job (after the day review)
+        if: always() && inputs.keeper && steps.wait.outputs.slot == 'review'
+        continue-on-error: true      # research never affects the Daybook runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run research.yml -R "$GITHUB_REPOSITORY"
       - name: Fail the job if the scan failed
         if: steps.scan.outcome == 'failure'
         run: exit 1

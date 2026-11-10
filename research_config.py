@@ -27,4 +27,5 @@ MIN_VOL = 0.25                    # floor for the volatility used to price optio
 
 # ---------- Watchlist 15m check (step 2: why picks fail) ----------
 CROSS_LOOKBACK = 4                # "MACD crossed in the last hour" = within 4 candles
+CCI_TRACK_FROM = "2026-11-09"     # first trading day after the CCI past ±100 finding; results from here are the real test
 DECISION_DAYS = 20                # trading days of tracking before deciding whether to use it as a filter

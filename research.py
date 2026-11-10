@@ -70,7 +70,8 @@ def main():
     res["settings"] = {"ema": R.EMA_LEN, "macd": [R.MACD_FAST, R.MACD_SLOW, R.MACD_SIGNAL], "cci": R.CCI_LEN,
                        "first": R.FIRST_SIGNAL_CT, "last": R.LAST_SIGNAL_CT, "exit": R.EXIT_CT,
                        "take_profit": S.C.TAKE_PROFIT, "stop_loss": S.C.STOP_LOSS, "max_trade": S.C.MAX_TRADE_DOLLARS,
-                       "tickers": ST.tickers(), "decision_days": R.DECISION_DAYS}
+                       "tickers": ST.tickers(), "decision_days": R.DECISION_DAYS,
+                       "cci_track_from": R.CCI_TRACK_FROM}
     scored = SA.scored_days()
     names = sorted(set(ST.tickers()) | {r["ticker"] for sc in scored.values() for r in sc})
     x15 = {t: ST.ind15(df) for t, df in ST.candles(names, "60d", "15m").items()}

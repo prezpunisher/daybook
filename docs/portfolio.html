@@ -166,7 +166,7 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
 .grid line { stroke: var(--border); }
 .cal td.c { text-align: right; font-variant-numeric: tabular-nums; }
 .cal td.g { background: var(--pos-bg); } .cal td.rd { background: var(--neg-bg); }
-.cal tr.day { cursor: pointer; } .cal tr.day:hover td { outline: 1px solid var(--border); }
+.cal tr.drow { cursor: pointer; } .cal tr.drow:hover td { outline: 1px solid var(--border); }
 .cal tr.on td { box-shadow: inset 0 -2px 0 var(--text-primary); }
 .flag { font-size: 11px; color: var(--text-muted); }
 .drill { margin-top: 12px; }
@@ -341,13 +341,13 @@ function renderCalendar() {
   if (!all.length) { $("cal").innerHTML = `<div class="empty">Each session's result per account shows here once it's booked.</div>`; $("drill").innerHTML = ""; return; }
   const by = Object.fromEntries(accts().map(a => { const r = run(a.id); return [a.id, r.status === "ok" ? Object.fromEntries(r.days.map(d => [d.d, d])) : {}]; }));
   $("cal").innerHTML = `<div class="card"><table class="cal"><thead><tr><th>Session</th>${accts().map(a => `<th class="r"><span style="color:${COLORS[a.id]}">●</span> ${esc(a.id)}</th>`).join("")}</tr></thead><tbody>
-    ${all.map(d => `<tr class="day ${d === pickDay ? "on" : ""}" data-d="${d}"><td>${esc(fmtDay(d))}</td>${accts().map(a => {
+    ${all.map(d => `<tr class="drow ${d === pickDay ? "on" : ""}" data-d="${d}"><td>${esc(fmtDay(d))}</td>${accts().map(a => {
       const x = by[a.id][d];
       if (!x) return `<td class="c"><span class="flag">—</span></td>`;
       if (x.flag === "no data") return `<td class="c"><span class="flag">no data</span></td>`;
       return `<td class="c ${x.pnl > 0 ? "g" : x.pnl < 0 ? "rd" : ""}">${money(x.pnl)}<div class="flag">${x.fills ? Math.round(x.fills / 2) + " trade" + (x.fills > 2 ? "s" : "") : "no trades"}${x.flag === "incomplete" ? " · incomplete" : ""}</div></td>`;
     }).join("")}</tr>`).join("")}</tbody></table></div>`;
-  $("cal").querySelectorAll("tr.day").forEach(tr => tr.onclick = () => { pickDay = pickDay === tr.dataset.d ? null : tr.dataset.d; renderCalendar(); });
+  $("cal").querySelectorAll("tr.drow").forEach(tr => tr.onclick = () => { pickDay = pickDay === tr.dataset.d ? null : tr.dataset.d; renderCalendar(); });
   if (!pickDay) { $("drill").innerHTML = ""; return; }
   $("drill").innerHTML = `<div class="card"><table><thead><tr><th>${esc(fmtDay(pickDay))}</th><th>Option</th><th class="r">Contracts</th><th class="r">Buy</th><th class="r">Sell</th><th class="r">Net</th><th class="r">Balance</th></tr></thead><tbody>
     ${accts().map(a => { const r = run(a.id); if (r.status !== "ok") return ""; const day = r.days.find(x => x.d === pickDay);

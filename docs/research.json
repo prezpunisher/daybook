@@ -964,7 +964,8 @@
      "pnl": 1140
     }
    },
-   "symbol": "WMT261106C00127000"
+   "symbol": "WMT261106C00127000",
+   "exits15": null
   },
   {
    "date": "2026-11-04",
@@ -1008,7 +1009,8 @@
      "pnl": 270
     }
    },
-   "symbol": "PLTR261106P00172500"
+   "symbol": "PLTR261106P00172500",
+   "exits15": null
   },
   {
    "date": "2026-11-04",
@@ -1052,7 +1054,8 @@
      "pnl": 580
     }
    },
-   "symbol": "NVDA261106P00207500"
+   "symbol": "NVDA261106P00207500",
+   "exits15": null
   },
   {
    "date": "2026-11-04",
@@ -1096,7 +1099,8 @@
      "pnl": 545
     }
    },
-   "symbol": "NBIS261106P00150000"
+   "symbol": "NBIS261106P00150000",
+   "exits15": null
   },
   {
    "date": "2026-11-04",
@@ -1140,7 +1144,8 @@
      "pnl": 577
     }
    },
-   "symbol": "MRVL261106P00165000"
+   "symbol": "MRVL261106P00165000",
+   "exits15": null
   },
   {
    "date": "2026-11-04",
@@ -1184,7 +1189,8 @@
      "pnl": 1230
     }
    },
-   "symbol": "INTC261106P00060000"
+   "symbol": "INTC261106P00060000",
+   "exits15": null
   },
   {
    "date": "2026-11-04",
@@ -1228,7 +1234,8 @@
      "pnl": 216
     }
    },
-   "symbol": "HOOD261106P00086000"
+   "symbol": "HOOD261106P00086000",
+   "exits15": null
   },
   {
    "date": "2026-11-04",
@@ -1272,7 +1279,8 @@
      "pnl": 0
     }
    },
-   "symbol": "GOOGL261106P00290000"
+   "symbol": "GOOGL261106P00290000",
+   "exits15": null
   },
   {
    "date": "2026-11-03",
@@ -2850,7 +2858,7 @@
    "exits15": null
   }
  ],
- "updated": "2026-11-09T22:29-06:00",
+ "updated": "2026-11-09T23:44-06:00",
  "shadow": [
   {
    "ticker": "WMT",
@@ -5071,7 +5079,8 @@
      "ret": 0.056,
      "pnl": 40
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "ORCL",
@@ -5122,7 +5131,8 @@
      "ret": 0.406,
      "pnl": 351
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "AMD",
@@ -5173,7 +5183,8 @@
      "ret": 0.199,
      "pnl": 266
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "INTC",
@@ -5224,7 +5235,8 @@
      "ret": 1.056,
      "pnl": 950
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "NBIS",
@@ -5275,7 +5287,8 @@
      "ret": 0.538,
      "pnl": 350
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "MRVL",
@@ -5326,7 +5339,8 @@
      "ret": 0.884,
      "pnl": 548
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "WMT",
@@ -5377,7 +5391,8 @@
      "ret": 1.992,
      "pnl": 1841
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "SPY",
@@ -5428,7 +5443,8 @@
      "ret": 0.137,
      "pnl": 110
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "QQQ",
@@ -5479,7 +5495,8 @@
      "ret": 0.183,
      "pnl": 130
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "ORCL",
@@ -5530,7 +5547,8 @@
      "ret": 0.02,
      "pnl": 15
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "META",
@@ -5581,7 +5599,8 @@
      "ret": 0.693,
      "pnl": 678
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "IWM",
@@ -5632,7 +5651,8 @@
      "ret": 0.0,
      "pnl": 0
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "CRWV",
@@ -5683,7 +5703,8 @@
      "ret": 0.987,
      "pnl": 924
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "AMD",
@@ -5734,7 +5755,8 @@
      "ret": 0.242,
      "pnl": 370
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "AVGO",
@@ -5785,7 +5807,8 @@
      "ret": 0.0,
      "pnl": 0
     }
-   }
+   },
+   "exits15": null
   },
   {
    "ticker": "IWM",

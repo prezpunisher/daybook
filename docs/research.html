@@ -116,6 +116,14 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 .decide { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
 .decide .bar { height: 8px; background: var(--mid); border-radius: 99px; margin: 8px 0 4px; overflow: hidden; }
 .decide .bar span { display: block; height: 100%; background: var(--text-primary); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 10px; }
+.filters label { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-secondary); }
+.filters select { font: inherit; font-size: 13px; padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-1); color: var(--text-primary); max-width: 150px; }
+.filters select.set { border-color: var(--text-primary); }
+.filters button { font: inherit; font-size: 13px; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
+.fsum { font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; }
 details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px; margin: 12px 0 8px; }
 .sellbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
   background: var(--surface-0); padding: 10px 0; margin-top: 8px; border-bottom: 1px solid var(--border); }
@@ -152,7 +160,8 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
   <div id="wcCmp"></div>
   <h2 style="margin-top:24px">Each reading at the push <span class="meta">trades where it was true vs. not</span></h2>
   <div id="wcSplit"></div>
-  <h2 style="margin-top:24px">Every pick <span class="meta" id="wcMeta"></span> <span class="seg" id="wcSeg"><button data-v="10" class="on">Last 10 days</button><button data-v="all">All</button><button data-v="lost">Losers</button></span></h2>
+  <h2 style="margin-top:24px">Every pick <span class="meta" id="wcMeta"></span></h2>
+  <div class="filters" id="wcFilters"></div>
   <div id="wcRows"></div>
 
   <h2>15m EMA50 + MACD + CCI strategy <span class="tag">shadow</span> <span class="meta">signals logged and scored, never pushed</span></h2>
@@ -162,7 +171,8 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
   <div id="shCmp"></div>
   <h2 style="margin-top:24px">Breakdown</h2>
   <div id="shSplit"></div>
-  <h2 style="margin-top:24px">Signals <span class="meta" id="shMeta"></span> <span class="seg" id="shSeg"><button data-v="10" class="on">Last 10 days</button><button data-v="all">All</button></span></h2>
+  <h2 style="margin-top:24px">Signals <span class="meta" id="shMeta"></span></h2>
+  <div class="filters" id="shFilters"></div>
   <div id="shRows"></div>
 
   <h2>Backtest <span class="meta" id="btMeta"></span></h2>
@@ -183,7 +193,49 @@ const pctc = (v, d = 0) => v == null ? "—" : `<span class="${v >= 0 ? "pos" : 
 const tile = (v, l) => `<div class="tile"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`;
 const yn = (v, good = true) => v == null ? '<span class="muted">—</span>' : v ? `<span class="${good ? "pos" : "neg"}">✓</span>` : `<span class="${good ? "neg" : "pos"}">✗</span>`;
 const mk = (v, f) => v ? `<span class="pos">${esc(f)}</span>` : '<span class="muted">—</span>';
-let data = null, wcView = "10", shView = "10", tgt = "3";
+let data = null, tgt = "3";
+// table filters: [key, label, options or a function of the rows that lists them, test(row, value)]
+const YN = [["", "Any"], ["y", "Yes"], ["n", "No"]];
+const yesNo = f => (r, v) => (v === "y") === (f(r) === true);
+const dirOf = r => (r.dir || (r.direction === "CALLS" ? "C" : "P"));
+const COMMON = [
+  ["range", "Days", [["10", "Last 10 days"], ["5", "Last 5 days"], ["all", "All days"]], null],
+  ["day", "Day", rows => [["", "Any"], ...[...new Set(rows.map(r => r.date))].map(d => [d, fmtDay(d)])], (r, v) => r.date === v],
+  ["ticker", "Ticker", rows => [["", "Any"], ...[...new Set(rows.map(r => r.ticker))].sort().map(t => [t, t])], (r, v) => r.ticker === v],
+  ["dir", "Direction", [["", "Any"], ["C", "Calls"], ["P", "Puts"]], (r, v) => dirOf(r) === v],
+  ["res", "Result", [["", "Any"], ["won", "Won"], ["lost", "Lost"]], (r, v) => r.won != null && (v === "won") === r.won],
+  ["cci", "CCI ±100", YN, yesNo(r => r.cci_strong)],
+];
+const FILTERS = {
+  wc: [...COMMON, ["all3", "All 3 agree", YN, yesNo(r => r.all3_ok)], ["macd", "MACD with trade", YN, yesNo(r => r.macd_ok)],
+       ["ema", "Price vs EMA50 with trade", YN, yesNo(r => r.ema_ok)]],
+  sh: [...COMMON, ["trend", "Daily trend agrees", YN, yesNo(r => r.daily_trend_agrees)], ["liquid", "Option 500+ volume", YN, yesNo(r => !r.thin)]],
+};
+const fstate = { wc: { range: "10" }, sh: { range: "10" } };
+try { Object.assign(fstate, JSON.parse(localStorage.getItem("researchFilters") || "{}")); } catch (e) {}
+function applyFilters(key, rows) {
+  const st = fstate[key];
+  let out = rows;
+  if (!st.day && st.range && st.range !== "all") out = lastDays(out, st.range);
+  for (const [k, , , test] of FILTERS[key]) if (test && st[k]) out = out.filter(r => test(r, st[k]));
+  return out;
+}
+function filterBar(key, rows) {
+  const st = fstate[key];
+  const html = FILTERS[key].map(([k, label, opts]) => {
+    const list = typeof opts === "function" ? opts(rows) : opts;
+    const on = st[k] && !(k === "range" && st[k] === "10");
+    return `<label>${esc(label)} <select data-k="${k}" class="${on ? "set" : ""}">${list.map(([v, t]) => `<option value="${esc(v)}"${(st[k] || "") === v ? " selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`;
+  }).join("") + `<button data-reset>Reset</button>`;
+  $(key + "Filters").innerHTML = html;
+  $(key + "Filters").querySelectorAll("select").forEach(el => el.onchange = () => { st[el.dataset.k] = el.value; saveFilters(); render(); });
+  $(key + "Filters").querySelector("[data-reset]").onclick = () => { fstate[key] = { range: "10" }; saveFilters(); render(); };
+}
+function saveFilters() { try { localStorage.setItem("researchFilters", JSON.stringify(fstate)); } catch (e) {} }
+function fsum(rows) {
+  const st = stats(rows.filter(r => r.won != null));
+  return `<p class="fsum">Showing ${rows.length} · ${statCell(st)} selling at ${TGT[tgt]}</p>`;
+}
 const TGT = { "3": "+3%", "5": "+5%", "10": "+10%", best: "best price" };
 // re-score rows for the chosen sell target (exits are precomputed per trade by research.py)
 const at = (rows, k = tgt) => rows.filter(r => r.exits && r.exits[k]).map(r => ({ ...r, pnl: r.exits[k].pnl, won: r.exits[k].pnl > 0 }));
@@ -237,15 +289,16 @@ function renderWatchlist() {
   $("wcSplit").innerHTML = splitTable(rows, [["all3_ok", "All three agree with the trade"], ["macd_ok", "MACD on the trade's side of its signal"],
     ["ema_ok", "Price on the trade's side of EMA50"], ["cci_ok", "CCI on the trade's side of 0"], ["cci_strong", "CCI past ±100"],
     ["fresh_cross", "MACD crossed our way in the last hour"], ["cross_against_1h", "MACD crossed against us in the last hour"]]);
-  const shown = lastDays(rows, wcView);
-  $("wcMeta").textContent = `${shown.length} picks`;
-  $("wcRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
+  filterBar("wc", rows);
+  const shown = applyFilters("wc", rows);
+  $("wcMeta").textContent = `${shown.length} of ${rows.length} picks`;
+  $("wcRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.alert)}</span></td>
       <td>${r.dir === "C" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted">${esc(r.option || "")}</span></td>
       ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}
       <td>${yn(r.ema_ok)}</td><td>${yn(r.macd_ok)}${r.cross_against_1h ? ' <span class="neg" title="crossed against in the last hour">↺</span>' : ""}</td>
       <td class="r">${r.cci > 0 ? "+" : ""}${r.cci}</td><td>${yn(r.all3_ok)}</td>
-      <td class="hide-sm ${r.won ? "muted" : ""}">${esc(why(r))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No scored picks yet.</div>`;
+      <td class="hide-sm ${r.won ? "muted" : ""}">${esc(why(r))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">${rows.length ? "No picks match these filters." : "No scored picks yet."}</div>`;
 }
 
 function renderCci() {
@@ -288,9 +341,11 @@ function renderShadow() {
   $("shCmp").innerHTML = cmpTable([["All signals", all], ["CCI past ±100", all.filter(r => r.cci_strong)], ["Daily trend agrees", all.filter(r => r.daily_trend_agrees)]]);
   $("shSplit").innerHTML = splitTable(rows, [["trend", "Daily trend agrees (same as the watchlist's)"], ["cci_strong", "CCI past ±100"],
     ["liquid", `Option traded ${"500+"} contracts that day`], ["isCall", "Call (vs. put)"]]);
-  const shown = lastDays(all, shView);
-  $("shMeta").textContent = `${shown.length} signals`;
-  $("shRows").innerHTML = shown.length ? `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r hide-sm">+3% at</th><th class="r hide-sm">−20% at</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th></tr></thead><tbody>${shown.map(r => `<tr>
+  const allT = all.map(r => r.exits && r.exits[tgt] ? { ...r, pnl: r.exits[tgt].pnl, won: r.exits[tgt].pnl > 0 } : r);
+  filterBar("sh", allT);
+  const shown = applyFilters("sh", allT);
+  $("shMeta").textContent = `${shown.length} of ${all.length} signals`;
+  $("shRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r hide-sm">+3% at</th><th class="r hide-sm">−20% at</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.time)}</span></td>
       <td>${r.direction === "CALLS" ? '<span class="pos">▲ CALL</span>' : '<span class="neg">▼ PUT</span>'} <b>${esc(r.ticker)}</b></td>
       <td>${r.symbol ? `<a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}/" target="_blank" rel="noopener">${esc(r.label || r.symbol)}</a>` : '<span class="muted">not found</span>'}</td>
@@ -301,7 +356,7 @@ function renderShadow() {
       <td class="r hide-sm">${r.hit3 ? `<span class="pos">${esc(r.hit3)} (${r.min3}m)</span>` : '<span class="muted">—</span>'}</td>
       <td class="r hide-sm">${r.hit20 ? `<span class="neg">${esc(r.hit20)}</span>` : '<span class="muted">—</span>'}</td>
       ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-      <p class="note">★ = CCI past ±100. Bought = first option trade after the signal candle closed. Opt vol in red = under 500 contracts that day (hard to get in and out).</p>` : `<div class="empty">No signals logged yet.</div>`;
+      <p class="note">★ = CCI past ±100. Bought = first option trade after the signal candle closed. Opt vol in red = under 500 contracts that day (hard to get in and out).</p>` : `<div class="empty">${all.length ? "No signals match these filters." : "No signals logged yet."}</div>`;
 }
 
 function renderBacktest() {
@@ -336,7 +391,7 @@ function seg(id, set) {
     $(id).querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); set(b.dataset.v); render();
   });
 }
-seg("wcSeg", v => wcView = v); seg("shSeg", v => shView = v); seg("tgtSeg", v => tgt = v);
+seg("tgtSeg", v => tgt = v);
 fetch("research.json?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(d => { data = d || {}; render(); });
 </script>
 </body>

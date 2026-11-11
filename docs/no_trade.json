@@ -1,5 +1,10 @@
 {
- "tickers": [],
- "updated": null,
- "source": null
+ "tickers": [
+  "AMZN",
+  "GOOG",
+  "GOOGL",
+  "TSLA"
+ ],
+ "updated": "2026-11-10T21:03-06:00",
+ "source": "https://github.com/prezpunisher/daybook/issues/1"
 }

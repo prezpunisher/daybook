@@ -152,7 +152,8 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
     </div>
   </header>
   <p class="note">Research only. Nothing on this page sends a push or changes the 8:45 watchlist. It updates once a day after the close.</p>
-  <div class="sellbar"><b>Sell at</b> <span class="seg" id="tgtSeg"><button data-v="3" class="on">+3%</button><button data-v="5">+5%</button><button data-v="10">+10%</button><button data-v="best">Best price (hindsight)</button></span>
+  <p class="note" id="ntNote"></p>
+  <div class="sellbar"><b>Sell at</b> <span class="seg" id="tgtSeg"><button data-v="3" class="on">+3%</button><button data-v="5">+5%</button><button data-v="10">+10%</button></span>
     <span class="note" style="margin:0" id="tgtNote"></span></div>
 
   <h2>Watchlist 15m check <span class="meta">why picks fail</span></h2>
@@ -306,10 +307,10 @@ function renderWatchlist() {
   filterBar("wc", rows);
   const shown = applyFilters("wc", rows);
   $("wcMeta").textContent = `${shown.length} of ${rows.length} picks`;
-  $("wcRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th class="r" title="Selling at the chosen target, way out at −15% instead of −20%">${TGT[tgt]} / −15%</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
+  $("wcRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Pick</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r" title="Selling at the chosen target, way out at −15% instead of −20%">${TGT[tgt]} / −15%</th><th>EMA50</th><th>MACD</th><th class="r">CCI</th><th>All 3</th><th class="hide-sm">15m reading</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.alert)}</span></td>
       <td>${r.dir === "C" ? "▲" : "▼"} <b>${esc(r.ticker)}</b> <span class="muted">${esc(r.option || "")}</span></td>
-      ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}
+      ${["3", "5", "10"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}
       <td class="r">${cell15(r)}</td>
       <td>${yn(r.ema_ok)}</td><td>${yn(r.macd_ok)}${r.cross_against_1h ? ' <span class="neg" title="crossed against in the last hour">↺</span>' : ""}</td>
       <td class="r">${r.cci > 0 ? "+" : ""}${r.cci}</td><td>${yn(r.all3_ok)}</td>
@@ -333,7 +334,7 @@ function renderShadow() {
   filterBar("sh", allT);
   const shown = applyFilters("sh", allT);
   $("shMeta").textContent = `${shown.length} of ${all.length} signals`;
-  $("shRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r hide-sm">+3% at</th><th class="r hide-sm">−20% at</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">Best</th><th class="r" title="Selling at the chosen target, way out at −15% instead of −20%">${TGT[tgt]} / −15%</th></tr></thead><tbody>${shown.map(r => `<tr>
+  $("shRows").innerHTML = shown.length ? fsum(shown) + `<div class="card"><table><thead><tr><th>Day</th><th>Signal</th><th>Option</th><th class="r hide-sm">Opt vol</th><th class="hide-sm">Daily trend</th><th class="r">CCI</th><th class="r">Bought</th><th class="r hide-sm">+3% at</th><th class="r hide-sm">−20% at</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r" title="Selling at the chosen target, way out at −15% instead of −20%">${TGT[tgt]} / −15%</th></tr></thead><tbody>${shown.map(r => `<tr>
       <td>${esc(fmtDay(r.date))} <span class="muted">${esc(r.time)}</span></td>
       <td>${r.direction === "CALLS" ? '<span class="pos">▲ CALL</span>' : '<span class="neg">▼ PUT</span>'} <b>${esc(r.ticker)}</b></td>
       <td>${r.symbol ? `<a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}/" target="_blank" rel="noopener">${esc(r.label || r.symbol)}</a>` : '<span class="muted">not found</span>'}</td>
@@ -343,7 +344,7 @@ function renderShadow() {
       <td class="r">${r.entry != null ? `$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span>` : "—"}</td>
       <td class="r hide-sm">${r.hit3 ? `<span class="pos">${esc(r.hit3)} (${r.min3}m)</span>` : '<span class="muted">—</span>'}</td>
       <td class="r hide-sm">${r.hit20 ? `<span class="neg">${esc(r.hit20)}</span>` : '<span class="muted">—</span>'}</td>
-      ${["3", "5", "10", "best"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}<td class="r">${cell15(r)}</td></tr>`).join("")}</tbody></table></div>
+      ${["3", "5", "10"].map(k => `<td class="r${k === tgt ? " selc" : ""}">${cell$(r, k)}</td>`).join("")}<td class="r">${cell15(r)}</td></tr>`).join("")}</tbody></table></div>
       <p class="note">★ = CCI past ±100. Bought = first option trade after the signal candle closed. Opt vol in red = under 500 contracts that day (hard to get in and out).</p>` : `<div class="empty">${all.length ? "No signals match these filters." : "No signals logged yet."}</div>`;
 }
 
@@ -362,7 +363,7 @@ function renderBacktest() {
   const find = (t, name, costs = true) => bt.find(v => v.target === t && v.name === name && v.costs === costs);
   $("btCmp").innerHTML = bt.length ? `<div class="card"><table><thead><tr><th>Sell at</th><th>All signals</th><th>Daily trend agrees</th><th class="hide-sm">CCI past ±100</th><th>All signals, no trading costs</th></tr></thead><tbody>${["3", "5", "10"].map(t =>
     `<tr class="${t === k ? "sel" : ""}"><td>${TGT[t]} <span class="muted">or −20% / 2:50</span></td><td>${btCell(find(t, "All signals"))}</td><td>${btCell(find(t, "Daily trend agrees"))}</td><td class="hide-sm">${btCell(find(t, "CCI past ±100"))}</td><td>${btCell(find(t, "All signals", false))}</td></tr>`).join("")}</tbody></table></div>
-    <p class="note">PF = profit factor (dollars won ÷ dollars lost; above 1 makes money). "Best price" can't be backtested honestly, so the backtest stops at +10%.</p>` : "";
+    <p class="note">PF = profit factor (dollars won ÷ dollars lost; above 1 makes money). The backtest compares +3%, +5% and +10%.</p>` : "";
   const sel = bt.length ? bt.filter(v => v.target === k && v.costs).concat(bt.filter(v => v.target === k && !v.costs).map(v => ({ ...v, name: "All signals, no trading costs" }))) : b.variants;
   $("btRows").innerHTML = `<p class="note" style="margin:0 0 8px">Selling at ${TGT[k]}:</p><div class="card"><table>${head("Variant")}<tbody>${sel.map(row).join("")}</tbody></table></div>`;
   $("btTick").innerHTML = `<div class="card"><table>${head("Ticker")}<tbody>${(b.by_ticker || []).map(v => row({ ...v, name: v.ticker })).join("")}</tbody></table></div>`;
@@ -384,7 +385,20 @@ document.querySelectorAll("details.more").forEach(d => {
   try { d.open = localStorage.getItem("open:" + d.dataset.key) === "1"; } catch (e) {}
   d.addEventListener("toggle", () => { try { localStorage.setItem("open:" + d.dataset.key, d.open ? "1" : "0"); } catch (e) {} });
 });
-fetch("research.json?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(d => { data = d || {}; render(); });
+// names on the no-trade list (edited on the Daybook page) are left out of every number here; signals are still recorded
+const getJson = f => fetch(f + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+Promise.all([getJson("research.json"), getJson("no_trade.json")]).then(([d, nt]) => {
+  data = d || {};
+  const skip = new Set((nt && nt.tickers) || []);
+  if (skip.size) {
+    const n0 = (data.watchlist_check || []).length + (data.shadow || []).length;
+    data.watchlist_check = (data.watchlist_check || []).filter(r => !skip.has(r.ticker));
+    data.shadow = (data.shadow || []).filter(r => !skip.has(r.ticker));
+    const cut = n0 - data.watchlist_check.length - data.shadow.length;
+    $("ntNote").innerHTML = `Not counted (your no-trade list): <b>${[...skip].sort().map(esc).join(", ")}</b>, ${cut} trade${cut === 1 ? "" : "s"} left out. <a href="./">Edit the list</a>.`;
+  }
+  render();
+});
 </script>
 </body>
 </html>

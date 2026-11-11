@@ -1,0 +1,49 @@
+name: No-trade list
+
+# The dashboard's "Save list" opens a prefilled issue titled "No-trade list". When the repo owner submits it, this saves
+# docs/no_trade.json, re-runs the Research job (which re-measures the Research page and the simulated portfolios), and
+# closes the issue. Issues from anyone else are ignored. The live watchlist and pushes never read this list.
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: no-trade
+
+jobs:
+  apply:
+    if: github.event.issue.user.login == github.repository_owner && startsWith(github.event.issue.title, 'No-trade list')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Save the list
+        id: save
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}      # passed as data, never run as code
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+        run: |
+          echo "list=$(python no_trade.py apply | sed 's/^no-trade list: //')" >> "$GITHUB_OUTPUT"
+          git config user.name "scanner-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/no_trade.json
+          git diff --cached --quiet || git commit -m "no-trade list: from issue #${{ github.event.issue.number }}"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 10; done
+      - name: Re-measure with the new list
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run research.yml -R "$GITHUB_REPOSITORY"
+      - name: Confirm and close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIST: ${{ steps.save.outputs.list }}
+        run: |
+          gh issue close ${{ github.event.issue.number }} -R "$GITHUB_REPOSITORY" \
+            -c "Saved. Not measured from now on: ${LIST}. The dashboard, Research page and portfolios update in a few minutes. The live watchlist is unchanged."

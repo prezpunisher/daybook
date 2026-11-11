@@ -95,6 +95,16 @@ tr:last-child td { border-bottom: 0; }
 td.r, th.r { text-align: right; }
 .rules { display: flex; flex-wrap: wrap; gap: 8px; }
 .rules span { background: var(--mid); border-radius: 999px; padding: 4px 12px; font-size: 13px; }
+.nt { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.nt .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; min-height: 30px; align-items: center; }
+.nt .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--mid); border-radius: 999px; padding: 3px 6px 3px 11px; font-size: 13px; font-weight: 600; }
+.nt .chip.new { outline: 1px dashed var(--text-muted); }
+.nt .chip button { border: 0; background: none; color: var(--text-muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 4px; }
+.nt .add { display: flex; gap: 8px; flex-wrap: wrap; }
+.nt input { font: inherit; font-size: 14px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-0); color: var(--text-primary); min-width: 0; flex: 1 1 180px; text-transform: uppercase; }
+.nt .btn { cursor: pointer; font: inherit; font-size: 14px; }
+.pick.nt-x { opacity: .45; }
+tr.nt-x td { color: var(--text-muted); }
 .days { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
 .days button { flex: none; font: inherit; font-size: 13px; text-align: left; cursor: pointer; color: var(--text-primary);
   background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; }
@@ -138,6 +148,9 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 
   <h2>Scorecard <span class="meta" id="scMeta"></span></h2>
   <div id="scorecard"></div>
+
+  <h2>Stocks I won't trade <span class="meta">left out of every result: scorecard, Research, Portfolios</span></h2>
+  <div class="nt" id="noTrade"></div>
 
   <h2>Rules</h2>
   <div class="rules" id="rules"></div>
@@ -195,6 +208,8 @@ function repoLinks() {
 }
 
 let pickedDay = null;                           // "YYYY-MM-DD" chosen in Past days; null = most recent
+let noTrade = { tickers: [] };                   // docs/no_trade.json: names left out of the measured results
+const skipT = t => (noTrade.tickers || []).includes(t);
 let lastStatus = { runs: [] };
 const dayKey = r => r.time.slice(0, 10);
 
@@ -232,8 +247,9 @@ function render(status) {
     const s = runs.find(r => scored(r) && dayKey(r) === d);
     let line = w ? `${(w.picks || []).length} trades` : "—";
     if (s) {
-      const pnl = s.scorecard.reduce((a, x) => a + (x.pnl || 0), 0);
-      line = `${s.scorecard.filter(x => x.result > 0).length}/${s.scorecard.length} won · <span class="${pnl >= 0 ? "pos" : "neg"}">${pnl >= 0 ? "+" : "−"}$${Math.abs(Math.round(pnl)).toLocaleString()}</span>`;
+      const kept = s.scorecard.filter(x => !skipT(x.ticker));
+      const pnl = kept.reduce((a, x) => a + (x.pnl || 0), 0);
+      line = `${kept.filter(x => x.result > 0).length}/${kept.length} won · <span class="${pnl >= 0 ? "pos" : "neg"}">${pnl >= 0 ? "+" : "−"}$${Math.abs(Math.round(pnl)).toLocaleString()}</span>`;
     }
     const at = (w || s).at;
     return `<button data-day="${d}" class="${d === pickedDay ? "on" : ""}"><b>${esc(fmtDay(at))}</b>${line}</button>`;
@@ -281,7 +297,7 @@ function render(status) {
     let html = p.length ? `<div class="picks">${p.map(x => {
       const call = x.direction === "CALLS";
       const chg = x.day_chg != null ? `<span class="${x.day_chg >= 0 ? "pos" : "neg"}">${x.day_chg >= 0 ? "+" : ""}${x.day_chg.toFixed(1)}% today</span>` : "";
-      return `<a class="pick" href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(x.ticker)}" target="_blank" rel="noopener">
+      return `<a class="pick${skipT(x.ticker) ? " nt-x" : ""}" title="${skipT(x.ticker) ? "On your no-trade list: not measured" : ""}" href="https://www.tradingview.com/chart/?symbol=${encodeURIComponent(x.ticker)}" target="_blank" rel="noopener">
         <div class="top"><span class="badge ${call ? "calls" : "puts"}">${call ? "▲ CALLS" : "▼ PUTS"}</span>
           <span class="tk">${esc(x.ticker)}</span><span class="px">$${Number(x.price).toFixed(2)}</span>${chg}</div>
         <div class="ct">${esc(x.contract)}${x.opt_avg_vol != null ? ` · vol ${x.opt_avg_vol.toLocaleString()}/day` : ""}</div>
@@ -300,26 +316,30 @@ function render(status) {
   const sc = runs.find(r => scored(r) && dayKey(r) === pickedDay);
   if (!sc) {
     $("scMeta").textContent = "";
-    $("scorecard").innerHTML = `<div class="empty">After the 3:15 CT day review, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5% or −20%.</div>`;
+    $("scorecard").innerHTML = `<div class="empty">After the 3:15 CT day review, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5%, +10% or −20%.</div>`;
   } else {
-    const rows = sc.scorecard, n = rows.length;
-    const h3 = rows.filter(r => r.hit3).length, h5 = rows.filter(r => r.hit5).length;
+    const kept = sc.scorecard.filter(r => !skipT(r.ticker)), cut = sc.scorecard.filter(r => skipT(r.ticker));
+    const rows = kept.concat(cut), n = kept.length;
+    const h3 = kept.filter(r => r.hit3).length, h5 = kept.filter(r => r.hit5).length, h10 = kept.filter(r => r.hit10).length;
     const pct = v => `<span class="${v >= 0 ? "pos" : "neg"}">${v >= 0 ? "+" : ""}${Math.round(v * 100)}%</span>`;
     const t = (v, cls) => v ? `<span class="${cls}">${esc(v)}</span>` : `<span class="muted">—</span>`;
-    $("scMeta").textContent = `${fmtDay(sc.at)} · alert ${rows[0].alert} CT · ${h3}/${n} hit +3% · ${h5}/${n} hit +5%`;
+    $("scMeta").textContent = `${fmtDay(sc.at)} · alert ${rows[0].alert} CT · ${h3}/${n} hit +3% · ${h5}/${n} hit +5% · ${h10}/${n} hit +10%` +
+      (cut.length ? ` · ${cut.length} on your no-trade list, not counted` : "");
     $("scorecard").innerHTML = `<div class="card"><table>
-      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">−20%</th><th class="r hide-sm" title="Bought at the last print in the push minute instead">+3% if in at alert</th><th class="r hide-sm">Best</th><th class="r hide-sm">At close</th></tr></thead>
-      <tbody>${rows.map(r => `<tr>
+      <thead><tr><th>Option</th><th class="r">Vol at alert</th><th class="r hide-sm">Vol before</th><th class="r">Bought</th><th class="r">+3%</th><th class="r">+5%</th><th class="r">+10%</th><th class="r">−20%</th><th class="r hide-sm" title="Bought at the last print in the push minute instead">+3% if in at alert</th><th class="r hide-sm">At close</th></tr></thead>
+      <tbody>${rows.map(r => `<tr class="${skipT(r.ticker) ? "nt-x" : ""}" title="${skipT(r.ticker) ? "On your no-trade list: not counted" : ""}">
         <td>${r.direction === "CALLS" ? "▲" : "▼"} <a href="https://finance.yahoo.com/quote/${encodeURIComponent(r.symbol)}/" target="_blank" rel="noopener" title="Open this option's chart on Yahoo Finance"><b>${esc(r.ticker)}</b> <span class="muted hide-sm">${esc(r.symbol)}</span></a></td>
         <td class="r">${r.vol_alert_min.toLocaleString()}</td>
         <td class="r hide-sm">${r.vol_before_alert.toLocaleString()}</td>
         <td class="r">$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span></td>
-        <td class="r">${t(r.hit3 && (r.min3 != null ? `${r.hit3} (${r.min3}m)` : r.hit3), "pos")}</td><td class="r">${t(r.hit5 && (r.min5 != null ? `${r.hit5} (${r.min5}m)` : r.hit5), "pos")}</td><td class="r">${t(r.hit20, "neg")}</td>
+        <td class="r">${t(r.hit3 && (r.min3 != null ? `${r.hit3} (${r.min3}m)` : r.hit3), "pos")}</td><td class="r">${t(r.hit5 && (r.min5 != null ? `${r.hit5} (${r.min5}m)` : r.hit5), "pos")}</td><td class="r">${t(r.hit10 && (r.min10 != null ? `${r.hit10} (${r.min10}m)` : r.hit10), "pos")}</td><td class="r">${t(r.hit20, "neg")}</td>
         <td class="r hide-sm">${r.at_alert_entry != null ? `$${r.at_alert_entry.toFixed(2)} → ${t(r.at_alert_hit3, "pos")}` : ""}</td>
-        <td class="r hide-sm">${pct(r.best)}</td><td class="r hide-sm">${pct(r.now)}</td>
+        <td class="r hide-sm">${pct(r.now)}</td>
       </tr>`).join("")}</tbody></table></div>
       <p class="note">Tap a name to open that option's chart on Yahoo Finance (the data source). Bought = first option trade after the push. "If in at alert" = bought at the push minute's last print instead. Vol = contracts traded in the alert minute / earlier today. Low volume means the +3% print may be one small trade.</p>`;
   }
+
+  renderNoTrade(links);
 
   // rules
   const st = status.settings || {};
@@ -346,7 +366,40 @@ function render(status) {
     </tr>`).join("")}</tbody></table></div>`;
 }
 
+// no-trade list editor: edits are a local draft until saved; "Save list" opens a prefilled GitHub issue that only the
+// repo owner can submit, and the No-trade list workflow applies it (then everything re-measures in a few minutes)
+function draft() { try { const d = JSON.parse(localStorage.getItem("noTradeDraft") || "null"); return Array.isArray(d) ? d : null; } catch (e) { return null; } }
+function setDraft(d) { try { d ? localStorage.setItem("noTradeDraft", JSON.stringify(d)) : localStorage.removeItem("noTradeDraft"); } catch (e) {} }
+function renderNoTrade(links) {
+  const saved = (noTrade.tickers || []).slice().sort();
+  let d = draft();
+  if (d && JSON.stringify(d.slice().sort()) === JSON.stringify(saved)) { setDraft(null); d = null; }   // applied
+  const list = (d || saved).slice().sort(), changed = !!d;
+  const base = links ? links.run.replace(/\/actions\/workflows\/.*$/, "") : null;
+  const body = `Tickers: ${list.join(", ")}\n\nSubmit this issue to save your no-trade list. These names are left out of the dashboard scorecard, Research page and simulated portfolios. The live watchlist and pushes don't change.`;
+  const url = base ? `${base}/issues/new?title=${encodeURIComponent("No-trade list")}&body=${encodeURIComponent(body)}` : null;
+  $("noTrade").innerHTML = `<div class="note" style="margin:0">Names on this list still get scanned and pushed as usual; they're just not counted in your results, so the numbers reflect only what you'd actually trade.</div>
+    <div class="chips">${list.length ? list.map(t => `<span class="chip ${saved.includes(t) ? "" : "new"}">${esc(t)}<button data-rm="${esc(t)}" aria-label="Remove ${esc(t)}">×</button></span>`).join("") : '<span class="muted" style="font-size:13px">No stocks listed. Everything is measured.</span>'}</div>
+    <div class="add"><input id="ntIn" placeholder="Add tickers, e.g. AMZN, HOOD" autocomplete="off" autocapitalize="characters"><button class="btn" id="ntAdd">Add</button>
+      ${changed ? `${url ? `<a class="btn primary" id="ntSave" href="${esc(url)}" target="_blank" rel="noopener">Save list on GitHub</a>` : ""}<button class="btn" id="ntUndo">Undo changes</button>` : ""}</div>
+    <p class="note">${changed ? `Not saved yet${removedOrAdded(saved, list)}. <b>Save list on GitHub</b> opens a prefilled issue; tap <b>Submit new issue</b> and everything updates in a few minutes.` :
+      noTrade.updated ? `Saved ${esc(new Date(noTrade.updated).toLocaleString("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))} CT.` : "Add names, then save."}</p>`;
+  const add = () => {
+    const toks = ($("ntIn").value.toUpperCase().match(/[A-Z][A-Z.\-]{0,9}/g) || []).map(t => t.replace(/[.\-]+$/, "")).filter(t => /^[A-Z]{1,6}([.\-][A-Z]{1,2})?$/.test(t));
+    if (toks.length) { setDraft([...new Set([...list, ...toks])]); render(lastStatus); }
+  };
+  $("ntAdd").onclick = add;
+  $("ntIn").onkeydown = e => { if (e.key === "Enter") add(); };
+  $("noTrade").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { setDraft(list.filter(t => t !== b.dataset.rm)); render(lastStatus); });
+  if ($("ntUndo")) $("ntUndo").onclick = () => { setDraft(null); render(lastStatus); };
+}
+function removedOrAdded(a, b) {
+  const add = b.filter(t => !a.includes(t)), rm = a.filter(t => !b.includes(t));
+  return (add.length ? ` · adding ${add.join(", ")}` : "") + (rm.length ? ` · removing ${rm.join(", ")}` : "");
+}
+
 async function load() {
+  try { const r = await fetch("no_trade.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) noTrade = await r.json(); } catch (e) {}
   try {
     const res = await fetch("status.json?t=" + Date.now(), { cache: "no-store" });
     render(res.ok ? await res.json() : { runs: [] });

@@ -195,8 +195,9 @@ def metrics(tr):
             "risk_reward": round(float(wins.mean() / -losses.mean()), 2) if len(wins) and len(losses) and losses.mean() < 0 else None}
 
 
-def backtest():
-    ts = tickers()
+def backtest(exclude=()):
+    """exclude: tickers on the no-trade list, left out of the backtest (signals are still logged for them)."""
+    ts = [t for t in tickers() if t not in set(exclude)]
     S.log.info("research backtest: %d tickers", len(ts))
     x15 = {t: ind15(df) for t, df in candles(ts, f"{R.BACKTEST_DAYS}d", "15m").items()}
     b5 = candles(ts, f"{R.BACKTEST_DAYS}d", "5m")
@@ -251,6 +252,7 @@ def backtest():
         by_target.append({"target": k, "costs": False, "name": "All signals",
                           **metrics([{**t, "ret": t[f"ret0_{k}"], "pnl": t[f"pnl0_{k}"]} for t in trades])})
     return {"ran": datetime.now(S.CT).isoformat(timespec="minutes"), "days": days, "by_target": by_target,
+            "no_trade": sorted(exclude),
             "from": trades[0]["date"] if trades else None, "to": trades[-1]["date"] if trades else None,
             "costs": {"spread": R.SPREAD_PCT, "slippage": R.SLIPPAGE_PCT, "commission": R.COMMISSION_PER_CONTRACT},
             "variants": [{"name": k, **metrics(v)} for k, v in variants.items()],

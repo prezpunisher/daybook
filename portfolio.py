@@ -27,6 +27,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import no_trade
 import portfolio_config as P
 
 ROOT = Path(__file__).resolve().parent
@@ -407,12 +408,16 @@ def historical(cands, recorded):
     return out
 
 
-def forward(cands, recorded, ledger, rebuild=False, today=None):
+def forward(cands, recorded, ledger, rebuild=False, today=None, skip=()):
     """Observed paper trades from FORWARD_START on. A session is booked once, after the research job has processed it
-    (it's in research.json's shadow_days); booked sessions are never re-posted unless rebuilding."""
-    if rebuild or ledger.get("model_version") != P.MODEL_VERSION or ledger.get("start") != P.FORWARD_START:
-        ledger = {"model_version": P.MODEL_VERSION, "start": P.FORWARD_START, "rebuilds": ledger.get("rebuilds", []) +
-                  ([datetime.now(CT).isoformat(timespec="seconds")] if ledger else []), "accounts": {}, "cands": {}}
+    (it's in research.json's shadow_days); booked sessions are never re-posted unless rebuilding. Changing the no-trade
+    list rebuilds it (recorded with the reason), since the cash path depends on which names were traded."""
+    skip = sorted(skip)
+    why = "requested" if rebuild else "model changed" if ledger.get("model_version") != P.MODEL_VERSION or \
+        ledger.get("start") != P.FORWARD_START else "no-trade list changed" if ledger and ledger.get("no_trade", []) != skip else None
+    if why:
+        ledger = {"model_version": P.MODEL_VERSION, "start": P.FORWARD_START, "no_trade": skip, "rebuilds": ledger.get("rebuilds", []) +
+                  ([{"at": datetime.now(CT).isoformat(timespec="seconds"), "why": why}] if ledger else []), "accounts": {}, "cands": {}}
     ready = sorted(d for d in recorded["shadow"] if d >= P.FORWARD_START)
     final = ready[-1] if ready else None
     for a in P.ACCOUNTS:
@@ -462,10 +467,12 @@ def slim(c):
 def build(rebuild=False):
     status, research = load_json(STATUS, {}), load_json(RESEARCH, {})
     _minutes_cache.clear()
-    cands = candidates(status, research)
+    skip = no_trade.load()
+    every = candidates(status, research)
+    cands = {k: c for k, c in every.items() if c["ticker"] not in skip}      # names you won't trade aren't measured
     recorded = source_days(status, research)
     hist = historical(cands, recorded)
-    ledger = forward(cands, recorded, load_json(LEDGER, {}), rebuild=rebuild)
+    ledger = forward(cands, recorded, load_json(LEDGER, {}), rebuild=rebuild, skip=skip)
     used = {t["id"] for mode in (hist,) for acct in mode.values() for r in acct.values() for t in r.get("trades", [])}
     all_c = {**{k: slim(v) for k, v in cands.items() if k in used}, **{k: slim(v) for k, v in ledger["cands"].items()}}
     out = {
@@ -475,7 +482,8 @@ def build(rebuild=False):
                   "fees": {"source": P.FEE_SOURCE, "commission": P.COMMISSION_PER_CONTRACT, "orf_occ": P.ORF_OCC_PER_CONTRACT,
                            "cat": P.CAT_PER_CONTRACT, "taf": P.TAF_PER_CONTRACT, "taf_max": P.TAF_MAX,
                            "sec_per_million": round(P.SEC_RATE * 1_000_000, 2), "applies_to": P.SUPPORTED_UNDERLYING},
-                  "targets": list(P.TARGETS), "stops": list(P.STOPS), "default": list(P.DEFAULT_SCENARIO)},
+                  "targets": list(P.TARGETS), "stops": list(P.STOPS), "default": list(P.DEFAULT_SCENARIO),
+                  "no_trade": sorted(skip), "no_trade_signals": len(every) - len(cands)},
         "accounts": P.ACCOUNTS,
         "candidates": all_c,
         "modes": {"forward": {"label": "Forward paper trades", "accounts": forward_view(ledger)},

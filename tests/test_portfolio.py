@@ -170,14 +170,36 @@ class ExistingOutputs(unittest.TestCase):
                     if r["status"] == "ok":
                         self.assertEqual(r["days"][0]["open"], 1000.0)
 
+    # sha256 of research.html's renderBacktest(), pinned 2026-11-10 (Best removed at the user's request). Change it
+    # only on purpose: a mismatch means the backtest section of the Research page was altered.
+    BACKTEST_RENDERER = "1103ee6d9751840bbcd0c062b8160a5d9cc837cca7edb7eabde673a19c2306c7"
+
     def test_backtest_section_renders_as_before(self):
-        """research.html's backtest renderer is byte-identical to the version before the portfolio page existed."""
-        try:
-            old = subprocess.run(["git", "show", "59d663d:docs/research.html"], capture_output=True, text=True, cwd=ROOT, check=True).stdout
-        except Exception:
-            self.skipTest("git history unavailable")
-        cut = lambda s: s[s.index("function renderBacktest()"):s.index("function render()")]
-        self.assertEqual(cut(old), cut((ROOT / "docs/research.html").read_text()))
+        s = (ROOT / "docs/research.html").read_text()
+        code = s[s.index("function renderBacktest()"):s.index("function render()")]
+        self.assertEqual(hashlib.sha256(code.encode()).hexdigest(), self.BACKTEST_RENDERER)
+
+
+class NoTradeList(Base):
+    D = "2026-11-10"
+
+    def test_parse(self):
+        import no_trade
+        self.assertEqual(no_trade.parse("amzn, HOOD\nbrk.b  tsla tsla 123 $$"), ["AMZN", "HOOD", "BRK.B", "TSLA"])
+
+    def test_excluded_names_are_not_traded_and_rebuild_is_recorded(self):
+        import no_trade
+        self.minutes(self.D, {"S1": bars([("08:48", 6.0, 6.3, 5.9, 6.2)]), "S2": bars([("08:48", 3.0, 3.2, 2.9, 3.1)])})
+        c1, c2 = cand("wl:1", self.D, "S1", rank=0), cand("wl:2", self.D, "S2", rank=1)
+        c1["ticker"], c2["ticker"] = "AMZN", "HOOD"
+        rec = {"watchlist": {self.D}, "shadow": {self.D}}
+        with mock.patch.object(P, "FORWARD_START", self.D):
+            l1 = PF.forward({c["id"]: c for c in (c1, c2)}, rec, {})
+            l2 = PF.forward({"wl:2": c2}, rec, json.loads(json.dumps(l1)), skip={"AMZN"})
+        ids = [t["id"] for t in l2["accounts"]["A"]["3|20|proxy"]["trades"]]
+        self.assertEqual(ids, ["wl:2"])
+        self.assertEqual(l2["no_trade"], ["AMZN"])
+        self.assertEqual(l2["rebuilds"][-1]["why"], "no-trade list changed")
 
 
 if __name__ == "__main__":

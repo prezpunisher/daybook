@@ -21,6 +21,7 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 import yfinance as yf
 
+import no_trade
 import research_config as R
 import scanner as S
 import side_analysis as SA
@@ -206,8 +207,10 @@ def main():
 
     # 3. weekly backtest
     bt = res.get("backtest") or {}
-    if not bt.get("ran") or now - datetime.fromisoformat(bt["ran"]) >= timedelta(days=R.BACKTEST_EVERY_DAYS):
-        res["backtest"] = ST.backtest()
+    skip = sorted(no_trade.load())                 # rerun right away when the no-trade list changes
+    if not bt.get("ran") or now - datetime.fromisoformat(bt["ran"]) >= timedelta(days=R.BACKTEST_EVERY_DAYS) \
+            or bt.get("no_trade", []) != skip:
+        res["backtest"] = ST.backtest(exclude=skip)
         save(res)
     print(f"research: {len(checked)} watchlist picks checked, {len(shadow)} shadow signals over "
           f"{len(res['shadow_days'])} days, backtest {res['backtest'].get('ran')}")

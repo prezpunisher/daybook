@@ -252,6 +252,8 @@ function renderHeader() {
   $("banner").innerHTML = mode === "forward"
     ? `<b>Forward paper trades</b> from ${fmtDay(m.forward_start)}: each session is booked once after its close and never rewritten. Prices are a <b>proxy</b> (the option's 1-minute last trades), so execution is uncertain; this is not a Robinhood balance.`
     : `<b>Historical replay, reconstructed</b> from records made before ${fmtDay(m.forward_start)}. Same rules and price proxy, recomputed on every run. Kept separate from the forward paper trades and never added to them.`;
+  const nt = m.no_trade || [];
+  if (nt.length) $("banner").innerHTML += ` <br>Not traded (your no-trade list): <b>${nt.map(esc).join(", ")}</b>, ${m.no_trade_signals} signal${m.no_trade_signals === 1 ? "" : "s"} left out. <a href="./">Edit the list</a>.`;
   const live = tgt === "3" && stp === "20";
   $("scenNote").textContent = (live ? "Live exit rule: sell at +3%, way out at −20%, out by 2:50 CT." : `Comparison only, not a trading rule: sell at +${tgt}%, way out at −${stp}%, out by 2:50 CT.`) +
     (fill === "proxy" ? " Fills at the option's last trade price." : " Fills pay half the bid/ask spread recorded at the 8:45 alert on each side (watchlist accounts only).");

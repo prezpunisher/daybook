@@ -150,6 +150,24 @@ class Ledger(Base):
         self.assertEqual(a1["days"], a2["days"])
 
 
+class LateData(Base):
+    def test_no_data_day_is_rebooked_when_data_arrives(self):
+        d1, d2 = "2026-11-10", "2026-11-11"
+        self.minutes(d2, {"S1": bars([("08:48", 6.0, 6.3, 5.9, 6.2)])})
+        c = cand("wl:late", d2, "S1")
+        with mock.patch.object(P, "FORWARD_START", d1):
+            l1 = PF.forward({c["id"]: c}, {"watchlist": {d1}, "shadow": {d1, d2}}, {})       # review for d2 missing
+            self.assertEqual(l1["accounts"]["A"]["3|20|proxy"]["days"][-1]["flag"], "no data")
+            l2 = PF.forward({c["id"]: c}, {"watchlist": {d1, d2}, "shadow": {d1, d2}}, json.loads(json.dumps(l1)))
+            l3 = PF.forward({c["id"]: c}, {"watchlist": {d1, d2}, "shadow": {d1, d2}}, json.loads(json.dumps(l2)))
+        a2 = l2["accounts"]["A"]["3|20|proxy"]
+        self.assertEqual([s["flag"] for s in a2["days"]], ["no signals", "ok"])
+        self.assertEqual([t["st"] for t in a2["trades"]], ["filled"])
+        self.assertEqual(l2["rebuilds"][-1]["why"], "late data for 2026-11-11")
+        self.assertEqual(l3["accounts"]["A"]["3|20|proxy"], a2)          # and only once
+        self.assertEqual(len(l3["rebuilds"]), len(l2["rebuilds"]))
+
+
 class ExistingOutputs(unittest.TestCase):
     FILES = ["docs/status.json", "docs/research.json", "config.py", "research_config.py", "scanner.py", "research.py"]
 

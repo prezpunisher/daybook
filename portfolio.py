@@ -422,6 +422,13 @@ def forward(cands, recorded, ledger, rebuild=False, today=None, skip=()):
     final = ready[-1] if ready else None
     for a in P.ACCOUNTS:
         acct = ledger["accounts"].setdefault(a["id"], {})
+        # a session booked as "no data" whose data arrived later (e.g. a day review rerun that evening): rebook this
+        # account from the start so the cash path is right, and record why
+        late = sorted({s["d"] for led in acct.values() for s in led["days"] if s["flag"] == "no data" and s["d"] in recorded[a["source"]]})
+        if late:
+            ledger["accounts"][a["id"]] = acct = {}
+            ledger.setdefault("rebuilds", []).append({"at": datetime.now(CT).isoformat(timespec="seconds"),
+                                                      "why": f"late data for {', '.join(late)}", "account": a["id"]})
         mine = [c for c in cands.values() if account_filter(a["id"])(c) and c["date"] >= P.FORWARD_START]
         for scen in scenarios():
             led = acct.setdefault(skey(scen), {"last": None, "state": new_state(), "trades": [], "days": []})

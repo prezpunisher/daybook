@@ -1,18 +1,28 @@
 name: Daybook
-run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.keeper && 'Daybook keeper' || 'Daybook' }}
+run-name: "${{ github.event_name == 'workflow_dispatch' && inputs.keeper && 'Daybook keeper' || github.event_name == 'workflow_dispatch' && inputs.slot && inputs.slot != 'auto' && format('Daybook rerun: {0} {1}', inputs.slot, inputs.date) || 'Daybook' }}"
 
 # GitHub's own cron can start hours late, so it no longer runs scans. A "keeper" run sleeps until the
-# next run time (7:10 / 8:45 / 2:30 CT), runs it, then starts the next keeper. The crons below are only
-# a watchdog: if no keeper is running or queued, they start one.
+# next run time (8:15 / 8:45 / 2:30 / 3:15 CT), runs it, then starts the next keeper and checks it really started.
+# The hourly cron is only a watchdog: if no keeper is running or queued, it starts one. The dashboard's rerun buttons
+# dispatch this workflow with `slot` (and `date` for a past day's review); those runs always run, even if done today.
 on:
   schedule:
-    - cron: "0 */3 * * *"
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       keeper:
         description: "Internal: start the self-scheduling loop instead of running a watchlist now"
         type: boolean
         default: false
+      slot:
+        description: "Rerun one process now (auto = the old time-window behavior)"
+        type: choice
+        options: [auto, premarket, watchlist, reminder, review]
+        default: auto
+      date:
+        description: "Day review only: score this past day (YYYY-MM-DD); empty = today"
+        type: string
+        default: ""
 
 concurrency:
   group: daybook-${{ github.event_name == 'workflow_dispatch' && inputs.keeper && 'keeper' || github.event_name }}
@@ -72,7 +82,9 @@ jobs:
           MAC_NOTIFICATIONS: "0"
           UNIVERSE_MAX_AGE_HOURS: "168"
           DASHBOARD_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
-          DAYBOOK_SLOT: ${{ steps.wait.outputs.slot }}
+          DAYBOOK_SLOT: ${{ steps.wait.outputs.slot || (inputs.slot != 'auto' && inputs.slot) || '' }}
+          DAYBOOK_MANUAL: ${{ !inputs.keeper && inputs.slot && inputs.slot != 'auto' && '1' || '' }}
+          DAYBOOK_DATE: ${{ !inputs.keeper && inputs.slot == 'review' && inputs.date || '' }}
         run: python -W ignore scanner.py cloud
       - name: Save run to dashboard
         if: steps.scan.outcome != 'skipped'
@@ -83,15 +95,29 @@ jobs:
           git diff --cached --quiet || (git commit -m "status: $(date -u +%FT%TZ)" && git pull --rebase -q && git push)
       - uses: actions/upload-pages-artifact@v3
         if: steps.scan.outcome != 'skipped'
+        continue-on-error: true      # a GitHub artifact outage must not fail the run (the push already went out)
         with:
           path: docs
       - name: Start the next keeper
         if: always() && inputs.keeper
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run daybook.yml -R "$GITHUB_REPOSITORY" -f keeper=true
+        run: |
+          # dispatch, then confirm GitHub actually started it (it refused once during an outage and the loop stopped)
+          for attempt in 1 2 3 4; do
+            gh workflow run daybook.yml -R "$GITHUB_REPOSITORY" -f keeper=true || true
+            for i in $(seq 1 12); do
+              sleep 10
+              alive=$(gh run list -R "$GITHUB_REPOSITORY" -w daybook.yml -L 15 --json displayTitle,status,databaseId \
+                -q "[.[] | select(.displayTitle == \"Daybook keeper\" and .status != \"completed\" and .databaseId != $GITHUB_RUN_ID)] | length")
+              if [ "${alive:-0}" != "0" ]; then echo "next keeper is running (attempt $attempt)"; exit 0; fi
+            done
+            echo "next keeper didn't start (attempt $attempt); retrying"
+          done
+          echo "::error::could not start the next keeper; the hourly watchdog will retry"
+          exit 1
       - name: Start the research job (after the day review)
-        if: always() && inputs.keeper && steps.wait.outputs.slot == 'review'
+        if: always() && ((inputs.keeper && steps.wait.outputs.slot == 'review') || inputs.slot == 'review')
         continue-on-error: true      # research never affects the Daybook runs
         env:
           GH_TOKEN: ${{ github.token }}

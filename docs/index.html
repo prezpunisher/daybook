@@ -88,6 +88,11 @@ h2 .meta { font-weight: 400; color: var(--text-muted); font-size: 13px; }
 .step { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
 .step .t { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .step .s { font-weight: 600; margin-top: 2px; }
+.step .rr, .rrlink { font-size: 12px; color: var(--text-secondary); text-decoration: none; border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; display: inline-block; margin-top: 6px; }
+.reruns { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.reruns a { display: block; text-decoration: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.reruns a:hover { border-color: var(--text-muted); }
+.reruns b { display: block; } .reruns span { font-size: 12px; color: var(--text-muted); }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
 th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { color: var(--text-muted); font-weight: 500; font-size: 13px; }
@@ -139,6 +144,10 @@ footer { margin-top: 40px; color: var(--text-muted); font-size: 12px; }
 
   <h2>Today <span class="meta" id="todayMeta"></span></h2>
   <div class="day" id="day"></div>
+
+  <h2>Run something now <span class="meta">each opens a prefilled GitHub issue: tap Submit new issue, it starts within a minute</span></h2>
+  <div class="reruns" id="reruns"></div>
+  <p class="note">Reruns always run, even if that step already ran today. Premarket, watchlist and the reminder send their usual push. A watchlist rerun becomes the day's list, so that's what the 3:15 review will score.</p>
 
   <h2>Past days <span class="meta">tap a day to see its watchlist and scorecard</span></h2>
   <div class="days" id="days"></div>
@@ -197,6 +206,14 @@ function slotsAround(now) {                    // weekday slots from 7 days back
     for (const s of SLOTS) out.push({ ...s, at: etDate(p.y, p.m, p.d, s.hm[0], s.hm[1]) });
   }
   return out.sort((a, b) => a.at - b.at);
+}
+
+// rerun buttons: a prefilled issue titled "Rerun: <kind> [day]"; the Rerun workflow starts it (owner only)
+function rerunUrl(links, kind, day = "") {
+  if (!links) return null;
+  const base = links.run.replace(/\/actions\/workflows\/.*$/, "");
+  const title = `Rerun: ${kind}${day ? " " + day : ""}`;
+  return `${base}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent("Submit this issue to start it now. Daybook closes it with a link to the run.")}`;
 }
 
 function repoLinks() {
@@ -271,20 +288,30 @@ function render(status) {
   const todayKey = fmtDay(now);
   $("todayMeta").textContent = todayKey + (["Sat", "Sun"].includes(etParts(now).wd) ? " · market closed" : "");
   const todays = slots.filter(s => fmtDay(s.at) === todayKey);
-  const step = (t, s, cls) => `<div class="step"><div class="t">${esc(t)}</div><div class="s ${cls}">${esc(s)}</div></div>`;
+  const step = (t, s, cls, more = "") => `<div class="step"><div class="t">${esc(t)}</div><div class="s ${cls}">${esc(s)}</div>${more}</div>`;
+  const ctIso = d => new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(d);      // the trading day, YYYY-MM-DD
+  const rr = (kind, label = "Rerun", at = now) => { const u = rerunUrl(links, kind, kind === "review" ? ctIso(at) : "");
+    return u ? `<a class="rr" href="${esc(u)}" target="_blank" rel="noopener">${label}</a>` : ""; };
   let dayHtml = "";
   if (!todays.length) dayHtml = step("Weekend", "No runs today", "muted") + step("Next run", next ? `${fmtDay(next.at)} ${fmtTime(next.at)} CT` : "—", "");
   else {
     for (const s of todays) {
       const r = runs.find(x => x.kind === s.kind && fmtDay(x.at) === todayKey);
       const label = `${fmtTime(s.at)} CT · ${s.label}`;
-      if (r) dayHtml += step(label, r.result === "failed" ? "✗ Failed" : `✓ ${r.result} at ${fmtTime(r.at)}`, r.result === "failed" ? "neg" : "pos");
+      if (r) dayHtml += step(label, r.result === "failed" ? "✗ Failed" : `✓ ${r.result} at ${fmtTime(r.at)}`, r.result === "failed" ? "neg" : "pos", rr(s.kind, "Rerun", s.at));
       else dayHtml += step(label, s.at > now ? "Scheduled" : (now - s.at < 75 * 60000 ? "Running or queued…" : "✗ Did not run"),
-        s.at > now ? "muted" : (now - s.at < 75 * 60000 ? "" : "neg"));
+        s.at > now ? "muted" : (now - s.at < 75 * 60000 ? "" : "neg"), s.at > now ? rr(s.kind, "Run now", s.at) : rr(s.kind, now - s.at < 75 * 60000 ? "Rerun" : "Run it now", s.at));
     }
     dayHtml += step("2:50 CT · Your exit", "Out of every option opened today", "");
   }
   $("day").innerHTML = dayHtml;
+  const RERUNS = [["premarket", "Premarket check", "Futures, VIX and the likely list. Sends the 8:15 push."],
+                  ["watchlist", "Watchlist", "Fresh trades with contracts and prices. Sends the trades push."],
+                  ["reminder", "Close reminder", "The close-everything push."],
+                  ["review", "Day review", "Scores today's watchlist on the 1-minute charts and sends the review."],
+                  ["research", "Research + portfolios", "Re-measures the Research page and the $1,000 accounts. No push."]];
+  $("reruns").innerHTML = links ? RERUNS.map(([k, t, d]) => `<a href="${esc(rerunUrl(links, k, k === "review" ? ctIso(now) : ""))}" target="_blank" rel="noopener"><b>↻ ${esc(t)}</b><span>${esc(d)}</span></a>`).join("")
+    : `<div class="empty">Rerun buttons work on the published dashboard.</div>`;
 
   // watchlist
   if (!wl) {
@@ -316,7 +343,10 @@ function render(status) {
   const sc = runs.find(r => scored(r) && dayKey(r) === pickedDay);
   if (!sc) {
     $("scMeta").textContent = "";
-    $("scorecard").innerHTML = `<div class="empty">After the 3:15 CT day review, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5%, +10% or −20%.</div>`;
+    const todayIso = new Intl.DateTimeFormat("en-CA", { timeZone: TZ }).format(now);
+    const canScore = wl && pickedDay && rerunUrl(links, "review") && !(pickedDay === todayIso && etParts(now).hh < 15);
+    $("scorecard").innerHTML = `<div class="empty">After the 3:15 CT day review, each watchlist name gets scored here: option volume at the alert, and when the option first reached +3%, +5%, +10% or −20%.
+      ${canScore ? `<div><a class="rrlink" href="${esc(rerunUrl(links, "review", pickedDay))}" target="_blank" rel="noopener">↻ Run the day review for ${esc(fmtDay(wl.at))}</a></div>` : ""}</div>`;
   } else {
     const kept = sc.scorecard.filter(r => !skipT(r.ticker)), cut = sc.scorecard.filter(r => skipT(r.ticker));
     const rows = kept.concat(cut), n = kept.length;

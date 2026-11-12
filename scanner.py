@@ -763,10 +763,10 @@ def close_reminder():
 WINDOWS = (5, 15, 30, 60)          # minutes after the push, for "best gain within"
 
 
-def day_review(info=None):
-    """After the close: how each of today's watchlist options did on the 1-minute chart, pushed and saved."""
+def day_review(info=None, day=None):
+    """After the close: how each of today's (or `day`'s) watchlist options did on the 1-minute chart, pushed and saved."""
     info = {} if info is None else info
-    sc = info["scorecard"] = score_today()
+    sc = info["scorecard"] = score_today(day)
     if not sc:
         info["result"] = "no watchlist today"
         return None
@@ -775,7 +775,8 @@ def day_review(info=None):
     wins = [r for r in sc if r["result"] > 0]
     pnl = sum(r["pnl"] for r in sc)
     by = {w: sum(r["best_in"][str(w)] >= C.TAKE_PROFIT for r in sc) for w in WINDOWS}
-    title = f"📊 Day review: {len(wins)}/{n} winners · {'+' if pnl >= 0 else '−'}${abs(pnl):,.0f}"
+    when = f" ({datetime.fromisoformat(day):%a %-m/%-d})" if day and day != datetime.now(ET).date().isoformat() else ""
+    title = f"📊 Day review{when}: {len(wins)}/{n} winners · {'+' if pnl >= 0 else '−'}${abs(pnl):,.0f}"
     lines = []
     for r in sc:
         mins = lambda k: f"{r[k]}m" if r[k] is not None else "—"
@@ -789,12 +790,12 @@ def day_review(info=None):
     return notify(title, body, priority=4, tags=["bar_chart"], click=C.DASHBOARD_URL or None)
 
 
-def score_today():
+def score_today(day=None):
     try:
         runs = json.loads(STATUS_FILE.read_text()).get("runs", [])
     except Exception:
         return []
-    today = datetime.now(ET).date().isoformat()
+    today = day or datetime.now(ET).date().isoformat()
     w = next((r for r in runs if r.get("kind") == "watchlist" and r.get("picks") and r["time"][:10] == today), None)
     if not w:
         return []
@@ -875,10 +876,14 @@ def cloud():
              "run_url": run_url()}
     t0 = time.time()
     forced = os.environ.get("DAYBOOK_SLOT")       # set by the keeper loop, which already waited for the right time
+    manual = os.environ.get("DAYBOOK_MANUAL") == "1"    # a rerun button on the dashboard: run it even if it already ran
+    day = os.environ.get("DAYBOOK_DATE") or None        # review only: score a past day
+    if day and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
+        day = None
     try:
         if forced:
-            entry["trigger"] = "keeper"
-            if already_ran(forced, now.date()):
+            entry["trigger"] = "rerun" if manual else "keeper"
+            if not manual and already_ran(forced, now.date()):
                 entry.update(kind="skip", result=f"{forced} already sent today")
                 return
             entry["kind"] = forced
@@ -887,7 +892,10 @@ def cloud():
             elif forced == "watchlist":
                 run_trend_scan(info=entry)
             elif forced == "review":
-                entry["notified"] = day_review(info=entry)
+                if day and day != now.date().isoformat():     # file it under the day it scores
+                    entry["rerun_at"], entry["time"] = entry["time"], datetime.combine(
+                        date.fromisoformat(day), datetime.strptime(C.REVIEW_TIME_ET, "%H:%M").time(), ET).isoformat(timespec="seconds")
+                entry["notified"] = day_review(info=entry, day=day)
             else:
                 entry.update(result="reminder sent", notified=close_reminder())
             return
@@ -937,7 +945,9 @@ def wait_for_slot(max_wait=5 * 3600 + 15 * 60, grace=20 * 60):
             continue
         for kind, hm in times:
             t = datetime.combine(d, datetime.strptime(hm, "%H:%M").time(), ET)
-            if t > now - timedelta(seconds=grace) and not (t <= now and already_ran(kind, d)):
+            # a late keeper still runs the day review that evening (the day's prices don't change after the close)
+            late_ok = kind == "review" and d == now.date()
+            if (t > now - timedelta(seconds=grace) or late_ok) and not (t <= now and already_ran(kind, d)):
                 due.append((t, kind))
     t, kind = min(due)
     wait = (t - now).total_seconds()

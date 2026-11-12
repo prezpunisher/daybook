@@ -41,6 +41,321 @@
  },
  "watchlist_check": [
   {
+   "date": "2026-11-11",
+   "ticker": "WMT",
+   "dir": "C",
+   "option": "126C",
+   "won": false,
+   "result": -0.2,
+   "pnl": -200,
+   "best": 0.0,
+   "min20": 8,
+   "alert": "8:47",
+   "ema_ok": true,
+   "ema_dist_%": 0.18,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -156.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 999,
+    "3": {
+     "ret": -0.2,
+     "pnl": -200
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -200
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -200
+    },
+    "best": {
+     "ret": 0.0,
+     "pnl": 0
+    }
+   },
+   "symbol": "WMT261113C00126000",
+   "exits15": {
+    "cost": 999,
+    "3": {
+     "ret": -0.15,
+     "pnl": -150
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -150
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -150
+    },
+    "best": {
+     "ret": 0.0,
+     "pnl": 0
+    }
+   }
+  },
+  {
+   "date": "2026-11-11",
+   "ticker": "SPY",
+   "dir": "P",
+   "option": "756P",
+   "won": false,
+   "result": -0.2,
+   "pnl": -168,
+   "best": 0.0,
+   "min20": 9,
+   "alert": "8:47",
+   "ema_ok": false,
+   "ema_dist_%": -1.01,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": 380.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 840,
+    "3": {
+     "ret": -0.2,
+     "pnl": -168
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -168
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -168
+    },
+    "best": {
+     "ret": 0.0,
+     "pnl": 0
+    }
+   },
+   "symbol": "SPY261113P00756000",
+   "exits15": {
+    "cost": 840,
+    "3": {
+     "ret": -0.15,
+     "pnl": -126
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -126
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -126
+    },
+    "best": {
+     "ret": 0.0,
+     "pnl": 0
+    }
+   }
+  },
+  {
+   "date": "2026-11-11",
+   "ticker": "MSTR",
+   "dir": "P",
+   "option": "122P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 22,
+   "best": 0.183,
+   "min20": 82,
+   "alert": "8:47",
+   "ema_ok": true,
+   "ema_dist_%": 0.48,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": 205.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "13:00",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 720,
+    "3": {
+     "ret": 0.03,
+     "pnl": 22
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 36
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 72
+    },
+    "best": {
+     "ret": 0.183,
+     "pnl": 132
+    }
+   },
+   "symbol": "MSTR261113P00122000",
+   "exits15": {
+    "cost": 720,
+    "3": {
+     "ret": 0.03,
+     "pnl": 22
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 36
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 72
+    },
+    "best": {
+     "ret": 0.183,
+     "pnl": 132
+    }
+   }
+  },
+  {
+   "date": "2026-11-11",
+   "ticker": "INTC",
+   "dir": "P",
+   "option": "61P",
+   "won": false,
+   "result": -0.2,
+   "pnl": -176,
+   "best": 0.014,
+   "min20": 14,
+   "alert": "8:47",
+   "ema_ok": false,
+   "ema_dist_%": -5.58,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": 510.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 882,
+    "3": {
+     "ret": -0.2,
+     "pnl": -176
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -176
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -176
+    },
+    "best": {
+     "ret": 0.014,
+     "pnl": 12
+    }
+   },
+   "symbol": "INTC261113P00061000",
+   "exits15": {
+    "cost": 882,
+    "3": {
+     "ret": -0.15,
+     "pnl": -132
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -132
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -132
+    },
+    "best": {
+     "ret": 0.014,
+     "pnl": 12
+    }
+   }
+  },
+  {
+   "date": "2026-11-11",
+   "ticker": "AMZN",
+   "dir": "C",
+   "option": "270C",
+   "won": true,
+   "result": 0.03,
+   "pnl": 26,
+   "best": 0.039,
+   "min20": 32,
+   "alert": "8:47",
+   "ema_ok": true,
+   "ema_dist_%": 0.22,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": true,
+   "cci": 66.0,
+   "cci_ok": true,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 852,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -170
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -170
+    },
+    "best": {
+     "ret": 0.039,
+     "pnl": 33
+    }
+   },
+   "symbol": "AMZN261113C00270000",
+   "exits15": {
+    "cost": 852,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -128
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -128
+    },
+    "best": {
+     "ret": 0.039,
+     "pnl": 33
+    }
+   }
+  },
+  {
    "date": "2026-11-10",
    "ticker": "WMT",
    "dir": "C",
@@ -3362,7 +3677,7 @@
    "exits15": null
   }
  ],
- "updated": "2026-11-11T20:21-06:00",
+ "updated": "2026-11-11T23:41-06:00",
  "shadow": [
   {
    "ticker": "META",

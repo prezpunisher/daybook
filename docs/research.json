@@ -41,6 +41,510 @@
  },
  "watchlist_check": [
   {
+   "date": "2026-11-13",
+   "ticker": "SPY",
+   "dir": "P",
+   "option": "756P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 20,
+   "best": 0.712,
+   "min20": null,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 0.24,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -90.0,
+   "cci_ok": true,
+   "cci_strong": false,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 674,
+    "3": {
+     "ret": 0.03,
+     "pnl": 20
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 34
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 67
+    },
+    "best": {
+     "ret": 0.712,
+     "pnl": 480
+    }
+   },
+   "symbol": "SPY261120P00756000",
+   "exits15": {
+    "cost": 674,
+    "3": {
+     "ret": 0.03,
+     "pnl": 20
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 34
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 67
+    },
+    "best": {
+     "ret": 0.712,
+     "pnl": 480
+    }
+   }
+  },
+  {
+   "date": "2026-11-13",
+   "ticker": "PLTR",
+   "dir": "P",
+   "option": "170P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 29,
+   "best": 0.667,
+   "min20": null,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 1.14,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -262.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 960,
+    "3": {
+     "ret": 0.03,
+     "pnl": 29
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 48
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 96
+    },
+    "best": {
+     "ret": 0.667,
+     "pnl": 640
+    }
+   },
+   "symbol": "PLTR261120P00170000",
+   "exits15": {
+    "cost": 960,
+    "3": {
+     "ret": 0.03,
+     "pnl": 29
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 48
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 96
+    },
+    "best": {
+     "ret": 0.667,
+     "pnl": 640
+    }
+   }
+  },
+  {
+   "date": "2026-11-13",
+   "ticker": "NOW",
+   "dir": "P",
+   "option": "100P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 25,
+   "best": 0.308,
+   "min20": 241,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 0.3,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -2.0,
+   "cci_ok": true,
+   "cci_strong": false,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 844,
+    "3": {
+     "ret": 0.03,
+     "pnl": 25
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 42
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 84
+    },
+    "best": {
+     "ret": 0.308,
+     "pnl": 260
+    }
+   },
+   "symbol": "NOW261120P00100000",
+   "exits15": {
+    "cost": 844,
+    "3": {
+     "ret": 0.03,
+     "pnl": 25
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 42
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 84
+    },
+    "best": {
+     "ret": 0.308,
+     "pnl": 260
+    }
+   }
+  },
+  {
+   "date": "2026-11-13",
+   "ticker": "MSTR",
+   "dir": "P",
+   "option": "110P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 27,
+   "best": 0.348,
+   "min20": 278,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 5.49,
+   "macd_ok": true,
+   "fresh_cross": true,
+   "cross_against_1h": true,
+   "cci": -283.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 890,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 44
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 89
+    },
+    "best": {
+     "ret": 0.348,
+     "pnl": 310
+    }
+   },
+   "symbol": "MSTR261120P00110000",
+   "exits15": {
+    "cost": 890,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 44
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 89
+    },
+    "best": {
+     "ret": 0.348,
+     "pnl": 310
+    }
+   }
+  },
+  {
+   "date": "2026-11-13",
+   "ticker": "JPM",
+   "dir": "C",
+   "option": "345C",
+   "won": true,
+   "result": 0.03,
+   "pnl": 27,
+   "best": 0.067,
+   "min20": null,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 0.53,
+   "macd_ok": true,
+   "fresh_cross": true,
+   "cross_against_1h": false,
+   "cci": 161.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "08:30",
+   "signal_after_push": "13:15",
+   "turned_against": "09:30",
+   "exits": {
+    "cost": 900,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 45
+    },
+    "10": {
+     "ret": -0.022,
+     "pnl": -20
+    },
+    "best": {
+     "ret": 0.067,
+     "pnl": 60
+    }
+   },
+   "symbol": "JPM261120C00345000",
+   "exits15": {
+    "cost": 900,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 45
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -135
+    },
+    "best": {
+     "ret": 0.067,
+     "pnl": 60
+    }
+   }
+  },
+  {
+   "date": "2026-11-13",
+   "ticker": "INTC",
+   "dir": "P",
+   "option": "60P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 24,
+   "best": 0.605,
+   "min20": null,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 2.56,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -325.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 813,
+    "3": {
+     "ret": 0.03,
+     "pnl": 24
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 41
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 81
+    },
+    "best": {
+     "ret": 0.605,
+     "pnl": 492
+    }
+   },
+   "symbol": "INTC261120P00060000",
+   "exits15": {
+    "cost": 813,
+    "3": {
+     "ret": 0.03,
+     "pnl": 24
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 41
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 81
+    },
+    "best": {
+     "ret": 0.605,
+     "pnl": 492
+    }
+   }
+  },
+  {
+   "date": "2026-11-13",
+   "ticker": "AMZN",
+   "dir": "C",
+   "option": "267.5C",
+   "won": false,
+   "result": -0.2,
+   "pnl": -118,
+   "best": 0.02,
+   "min20": 35,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 0.08,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -38.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 588,
+    "3": {
+     "ret": -0.2,
+     "pnl": -118
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -118
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -118
+    },
+    "best": {
+     "ret": 0.02,
+     "pnl": 12
+    }
+   },
+   "symbol": "AMZN261120C00267500",
+   "exits15": {
+    "cost": 588,
+    "3": {
+     "ret": -0.15,
+     "pnl": -88
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -88
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -88
+    },
+    "best": {
+     "ret": 0.02,
+     "pnl": 12
+    }
+   }
+  },
+  {
+   "date": "2026-11-13",
+   "ticker": "AAPL",
+   "dir": "C",
+   "option": "360C",
+   "won": true,
+   "result": 0.03,
+   "pnl": 26,
+   "best": 0.12,
+   "min20": 93,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 1.39,
+   "macd_ok": true,
+   "fresh_cross": true,
+   "cross_against_1h": false,
+   "cci": 251.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "08:30",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 870,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 44
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 87
+    },
+    "best": {
+     "ret": 0.12,
+     "pnl": 104
+    }
+   },
+   "symbol": "AAPL261120C00360000",
+   "exits15": {
+    "cost": 870,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 44
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 87
+    },
+    "best": {
+     "ret": 0.12,
+     "pnl": 104
+    }
+   }
+  },
+  {
    "date": "2026-11-12",
    "ticker": "SPY",
    "dir": "P",
@@ -4181,8 +4685,568 @@
    "exits15": null
   }
  ],
- "updated": "2026-11-13T13:14-06:00",
+ "updated": "2026-11-13T15:16-06:00",
  "shadow": [
+  {
+   "ticker": "NFLX",
+   "direction": "PUTS",
+   "time": "9:30",
+   "close": 62.97,
+   "ema": 63.49,
+   "macd": -0.129,
+   "macd_signal": -0.116,
+   "cci": -82.0,
+   "cci_strong": false,
+   "date": "2026-11-13",
+   "symbol": "NFLX261120P00063000",
+   "day_option_volume": 2136,
+   "thin": false,
+   "daily_trend_agrees": false,
+   "label": "63P",
+   "entry": 1.32,
+   "entry_time": "9:33",
+   "qty": 7,
+   "hit3": "10:18",
+   "hit5": "10:18",
+   "hit10": "10:19",
+   "hit20": null,
+   "min3": 45,
+   "min5": 45,
+   "min10": 46,
+   "min20": null,
+   "best": 0.22,
+   "now": 0.129,
+   "result": 0.03,
+   "pnl": 28,
+   "exits": {
+    "cost": 924,
+    "3": {
+     "ret": 0.03,
+     "pnl": 28
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 46
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 92
+    },
+    "best": {
+     "ret": 0.22,
+     "pnl": 203
+    }
+   },
+   "exits15": {
+    "cost": 924,
+    "3": {
+     "ret": 0.03,
+     "pnl": 28
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 46
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 92
+    },
+    "best": {
+     "ret": 0.22,
+     "pnl": 203
+    }
+   }
+  },
+  {
+   "ticker": "NVDA",
+   "direction": "PUTS",
+   "time": "9:15",
+   "close": 160.27,
+   "ema": 167.41,
+   "macd": -1.557,
+   "macd_signal": -1.487,
+   "cci": -304.0,
+   "cci_strong": true,
+   "date": "2026-11-13",
+   "symbol": "NVDA261120P00160000",
+   "day_option_volume": 25597,
+   "thin": false,
+   "daily_trend_agrees": true,
+   "label": "160P",
+   "entry": 7.85,
+   "entry_time": "9:16",
+   "qty": 1,
+   "hit3": "9:20",
+   "hit5": "9:21",
+   "hit10": "9:37",
+   "hit20": null,
+   "min3": 4,
+   "min5": 5,
+   "min10": 21,
+   "min20": null,
+   "best": 0.159,
+   "now": -0.146,
+   "result": 0.03,
+   "pnl": 24,
+   "exits": {
+    "cost": 785,
+    "3": {
+     "ret": 0.03,
+     "pnl": 24
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 39
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 78
+    },
+    "best": {
+     "ret": 0.159,
+     "pnl": 125
+    }
+   },
+   "exits15": {
+    "cost": 785,
+    "3": {
+     "ret": 0.03,
+     "pnl": 24
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 39
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 78
+    },
+    "best": {
+     "ret": 0.159,
+     "pnl": 125
+    }
+   }
+  },
+  {
+   "ticker": "NFLX",
+   "direction": "CALLS",
+   "time": "9:00",
+   "close": 63.79,
+   "ema": 63.52,
+   "macd": -0.102,
+   "macd_signal": -0.114,
+   "cci": 54.0,
+   "cci_strong": false,
+   "date": "2026-11-13",
+   "symbol": "NFLX261120C00064000",
+   "day_option_volume": 6365,
+   "thin": false,
+   "daily_trend_agrees": false,
+   "label": "64C",
+   "entry": 1.18,
+   "entry_time": "9:01",
+   "qty": 8,
+   "hit3": null,
+   "hit5": null,
+   "hit10": null,
+   "hit20": "9:14",
+   "min3": null,
+   "min5": null,
+   "min10": null,
+   "min20": 13,
+   "best": 0.025,
+   "now": -0.568,
+   "result": -0.2,
+   "pnl": -189,
+   "exits": {
+    "cost": 944,
+    "3": {
+     "ret": -0.2,
+     "pnl": -189
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -189
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -189
+    },
+    "best": {
+     "ret": 0.025,
+     "pnl": 24
+    }
+   },
+   "exits15": {
+    "cost": 944,
+    "3": {
+     "ret": -0.15,
+     "pnl": -142
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -142
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -142
+    },
+    "best": {
+     "ret": 0.025,
+     "pnl": 24
+    }
+   }
+  },
+  {
+   "ticker": "WMT",
+   "direction": "CALLS",
+   "time": "8:45",
+   "close": 127.68,
+   "ema": 125.75,
+   "macd": 0.251,
+   "macd_signal": 0.152,
+   "cci": 395.0,
+   "cci_strong": true,
+   "date": "2026-11-13",
+   "symbol": "WMT261120C00128000",
+   "day_option_volume": 1914,
+   "thin": false,
+   "daily_trend_agrees": false,
+   "label": "128C",
+   "entry": 3.85,
+   "entry_time": "8:47",
+   "qty": 2,
+   "hit3": "8:49",
+   "hit5": "8:49",
+   "hit10": null,
+   "hit20": null,
+   "min3": 2,
+   "min5": 2,
+   "min10": null,
+   "min20": null,
+   "best": 0.083,
+   "now": 0.016,
+   "result": 0.03,
+   "pnl": 23,
+   "exits": {
+    "cost": 770,
+    "3": {
+     "ret": 0.03,
+     "pnl": 23
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 38
+    },
+    "10": {
+     "ret": 0.016,
+     "pnl": 12
+    },
+    "best": {
+     "ret": 0.083,
+     "pnl": 64
+    }
+   },
+   "exits15": {
+    "cost": 770,
+    "3": {
+     "ret": 0.03,
+     "pnl": 23
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 38
+    },
+    "10": {
+     "ret": 0.016,
+     "pnl": 12
+    },
+    "best": {
+     "ret": 0.083,
+     "pnl": 64
+    }
+   }
+  },
+  {
+   "ticker": "NBIS",
+   "direction": "PUTS",
+   "time": "8:45",
+   "close": 114.45,
+   "ema": 134.62,
+   "macd": -4.188,
+   "macd_signal": -4.124,
+   "cci": -463.0,
+   "cci_strong": true,
+   "date": "2026-11-13",
+   "symbol": "NBIS261120P00115000",
+   "day_option_volume": 6454,
+   "thin": false,
+   "daily_trend_agrees": false,
+   "label": "115P",
+   "entry": 7.31,
+   "entry_time": "8:46",
+   "qty": 1,
+   "hit3": "8:55",
+   "hit5": "8:55",
+   "hit10": "8:56",
+   "hit20": "12:59",
+   "min3": 9,
+   "min5": 9,
+   "min10": 10,
+   "min20": 253,
+   "best": 0.45,
+   "now": -0.141,
+   "result": 0.03,
+   "pnl": 22,
+   "exits": {
+    "cost": 731,
+    "3": {
+     "ret": 0.03,
+     "pnl": 22
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 37
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 73
+    },
+    "best": {
+     "ret": 0.45,
+     "pnl": 329
+    }
+   },
+   "exits15": {
+    "cost": 731,
+    "3": {
+     "ret": 0.03,
+     "pnl": 22
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 37
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 73
+    },
+    "best": {
+     "ret": 0.45,
+     "pnl": 329
+    }
+   }
+  },
+  {
+   "ticker": "JPM",
+   "direction": "CALLS",
+   "time": "8:45",
+   "close": 345.5,
+   "ema": 343.67,
+   "macd": -0.061,
+   "macd_signal": -0.067,
+   "cci": 161.0,
+   "cci_strong": true,
+   "date": "2026-11-13",
+   "symbol": "JPM261120C00345000",
+   "day_option_volume": 1010,
+   "thin": false,
+   "daily_trend_agrees": true,
+   "label": "345C",
+   "entry": 4.36,
+   "entry_time": "8:48",
+   "qty": 2,
+   "hit3": "8:53",
+   "hit5": "9:34",
+   "hit10": "10:10",
+   "hit20": null,
+   "min3": 5,
+   "min5": 46,
+   "min10": 82,
+   "min20": null,
+   "best": 0.101,
+   "now": 0.009,
+   "result": 0.03,
+   "pnl": 26,
+   "exits": {
+    "cost": 872,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 44
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 87
+    },
+    "best": {
+     "ret": 0.101,
+     "pnl": 88
+    }
+   },
+   "exits15": {
+    "cost": 872,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 44
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 87
+    },
+    "best": {
+     "ret": 0.101,
+     "pnl": 88
+    }
+   }
+  },
+  {
+   "ticker": "AAPL",
+   "direction": "CALLS",
+   "time": "8:45",
+   "close": 359.97,
+   "ema": 355.04,
+   "macd": 0.255,
+   "macd_signal": 0.142,
+   "cci": 251.0,
+   "cci_strong": true,
+   "date": "2026-11-13",
+   "symbol": "AAPL261120C00360000",
+   "day_option_volume": 11524,
+   "thin": false,
+   "daily_trend_agrees": true,
+   "label": "360C",
+   "entry": 4.65,
+   "entry_time": "8:46",
+   "qty": 2,
+   "hit3": "9:00",
+   "hit5": null,
+   "hit10": null,
+   "hit20": "9:14",
+   "min3": 14,
+   "min5": null,
+   "min10": null,
+   "min20": 28,
+   "best": 0.047,
+   "now": -0.462,
+   "result": 0.03,
+   "pnl": 28,
+   "exits": {
+    "cost": 930,
+    "3": {
+     "ret": 0.03,
+     "pnl": 28
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -186
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -186
+    },
+    "best": {
+     "ret": 0.047,
+     "pnl": 44
+    }
+   },
+   "exits15": {
+    "cost": 930,
+    "3": {
+     "ret": 0.03,
+     "pnl": 28
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -140
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -140
+    },
+    "best": {
+     "ret": 0.047,
+     "pnl": 44
+    }
+   }
+  },
+  {
+   "ticker": "JPM",
+   "direction": "CALLS",
+   "time": "1:30",
+   "close": 344.55,
+   "ema": 344.03,
+   "macd": 0.087,
+   "macd_signal": 0.074,
+   "cci": 25.0,
+   "cci_strong": false,
+   "date": "2026-11-13",
+   "symbol": "JPM261120C00345000",
+   "day_option_volume": 1010,
+   "thin": false,
+   "daily_trend_agrees": true,
+   "label": "345C",
+   "entry": 4.25,
+   "entry_time": "1:35",
+   "qty": 2,
+   "hit3": "2:05",
+   "hit5": "2:05",
+   "hit10": null,
+   "hit20": null,
+   "min3": 30,
+   "min5": 30,
+   "min10": null,
+   "min20": null,
+   "best": 0.071,
+   "now": 0.035,
+   "result": 0.03,
+   "pnl": 26,
+   "exits": {
+    "cost": 850,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 42
+    },
+    "10": {
+     "ret": 0.035,
+     "pnl": 30
+    },
+    "best": {
+     "ret": 0.071,
+     "pnl": 60
+    }
+   },
+   "exits15": {
+    "cost": 850,
+    "3": {
+     "ret": 0.03,
+     "pnl": 26
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 42
+    },
+    "10": {
+     "ret": 0.035,
+     "pnl": 30
+    },
+    "best": {
+     "ret": 0.071,
+     "pnl": 60
+    }
+   }
+  },
   {
    "ticker": "MSFT",
    "direction": "PUTS",
@@ -12349,7 +13413,8 @@
   "2026-11-09",
   "2026-11-10",
   "2026-11-11",
-  "2026-11-12"
+  "2026-11-12",
+  "2026-11-13"
  ],
  "backtest": {
   "ran": "2026-11-10T21:08-06:00",

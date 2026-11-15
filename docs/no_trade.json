@@ -1,11 +1,16 @@
 {
  "tickers": [
   "AMZN",
+  "AVGO",
+  "CRWV",
   "GOOG",
   "GOOGL",
+  "JPM",
+  "MRVL",
+  "NBIS",
   "NVDA",
   "TSLA"
  ],
- "updated": "2026-11-10T21:07-06:00",
- "source": "https://github.com/prezpunisher/daybook/issues/2"
+ "updated": "2026-11-15T09:44-06:00",
+ "source": "https://github.com/prezpunisher/daybook/issues/3"
 }

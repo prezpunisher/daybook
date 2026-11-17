@@ -1,6 +1,156 @@
 {
  "runs": [
   {
+   "time": "2026-11-17T09:45:00-05:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/44102032060",
+   "kind": "watchlist",
+   "universe": 2053,
+   "downloaded": 2053,
+   "session": "2026-11-17",
+   "vix": 22.8,
+   "vix_text": "VIX 22.8 (elevated, options pricier)",
+   "aligned": 1117,
+   "skipped_earnings": [
+    "NVDA (Nov 17)"
+   ],
+   "skipped_pricey": [
+    "QQQ",
+    "MU",
+    "SNDK",
+    "LLY",
+    "LITE",
+    "COST",
+    "WDC",
+    "ASML",
+    "DELL",
+    "APP",
+    "PANW"
+   ],
+   "skipped_thin": [
+    "AMZN (449/day)",
+    "MRVL (108/day)",
+    "PG (400/day)"
+   ],
+   "picks": [
+    {
+     "ticker": "SPY",
+     "direction": "PUTS",
+     "price": 738.29,
+     "stop": 777.53,
+     "day_chg": -0.22,
+     "contract": "Nov 20 $738P (3 DTE) 6.90/6.94 at 8:46 CT, OI 5,384, IV 23%",
+     "target": "+3% target: option ~$7.13 \u2248 stock $737.92",
+     "symbol": "SPY261120P00738000",
+     "qty": 1,
+     "opt_avg_vol": 1995,
+     "size": "max 1 contract ($694)",
+     "mid": 6.92
+    },
+    {
+     "ticker": "IWM",
+     "direction": "PUTS",
+     "price": 272.65,
+     "stop": 288.78,
+     "day_chg": -0.11,
+     "contract": "Nov 20 $273P (3 DTE) 3.22/3.27 at 8:46 CT, OI 16,607, IV 28%",
+     "target": "+3% target: option ~$3.34 \u2248 stock $272.48",
+     "symbol": "IWM261120P00273000",
+     "qty": 3,
+     "opt_avg_vol": 6216,
+     "size": "max 3 contracts ($981)",
+     "mid": 3.25
+    },
+    {
+     "ticker": "AAPL",
+     "direction": "CALLS",
+     "price": 353.11,
+     "stop": 333.0,
+     "day_chg": 0.09,
+     "contract": "Nov 20 $352.5C (3 DTE) 3.95/4.25 at 8:46 CT, OI 3,243, IV 25%",
+     "target": "+3% target: option ~$4.22 \u2248 stock $353.31",
+     "symbol": "AAPL261120C00352500",
+     "qty": 2,
+     "opt_avg_vol": 890,
+     "size": "max 2 contracts ($850)",
+     "mid": 4.1
+    },
+    {
+     "ticker": "INTC",
+     "direction": "PUTS",
+     "price": 54.23,
+     "stop": 71.82,
+     "day_chg": -2.24,
+     "contract": "Nov 20 $54P (3 DTE) 1.82/1.85 at 8:46 CT, OI 3,394, IV 87%",
+     "target": "+3% target: option ~$1.89 \u2248 stock $54.13",
+     "symbol": "INTC261120P00054000",
+     "qty": 5,
+     "opt_avg_vol": 3881,
+     "size": "max 5 contracts ($925)",
+     "mid": 1.83
+    },
+    {
+     "ticker": "PLTR",
+     "direction": "PUTS",
+     "price": 160.27,
+     "stop": 188.98,
+     "day_chg": -0.07,
+     "contract": "Nov 20 $160P (3 DTE) 3.70/3.95 at 8:46 CT, OI 6,877, IV 63%",
+     "target": "+3% target: option ~$3.94 \u2248 stock $160.05",
+     "symbol": "PLTR261120P00160000",
+     "qty": 2,
+     "opt_avg_vol": 2403,
+     "size": "max 2 contracts ($790)",
+     "mid": 3.83
+    },
+    {
+     "ticker": "NBIS",
+     "direction": "PUTS",
+     "price": 109.6,
+     "stop": 165.01,
+     "day_chg": 2.31,
+     "contract": "Nov 20 $110P (3 DTE) 6.80/8.25 at 8:46 CT, OI 4,590, IV 174% \u26a0\ufe0f wide spread",
+     "target": "+3% target: option ~$7.75 \u2248 stock $109.16",
+     "symbol": "NBIS261120P00110000",
+     "qty": 1,
+     "opt_avg_vol": 2227,
+     "size": "max 1 contract ($825)",
+     "mid": 7.53
+    },
+    {
+     "ticker": "MSTR",
+     "direction": "PUTS",
+     "price": 102.93,
+     "stop": 129.44,
+     "day_chg": -0.09,
+     "contract": "Nov 20 $103P (3 DTE) 4.40/4.45 at 8:46 CT, OI 3,177, IV 104%",
+     "target": "+3% target: option ~$4.56 \u2248 stock $102.69",
+     "symbol": "MSTR261120P00103000",
+     "qty": 2,
+     "opt_avg_vol": 4925,
+     "size": "max 2 contracts ($890)",
+     "mid": 4.43
+    },
+    {
+     "ticker": "KO",
+     "direction": "CALLS",
+     "price": 99.11,
+     "stop": 94.6,
+     "day_chg": -0.38,
+     "contract": "Nov 20 $99C (3 DTE) 0.72/1.22 at 8:46 CT, OI 1,239, IV 29% \u26a0\ufe0f wide spread",
+     "target": "+3% target: option ~$1.00 \u2248 stock $99.17",
+     "symbol": "KO261120C00099000",
+     "qty": 8,
+     "opt_avg_vol": 662,
+     "size": "max 8 contracts ($976)",
+     "mid": 0.97
+    }
+   ],
+   "notified": true,
+   "result": "watchlist sent",
+   "seconds": 106
+  },
+  {
    "time": "2026-11-17T09:15:00-05:00",
    "trigger": "keeper",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/44088756332",
@@ -6731,7 +6881,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-11-17T09:15:00-05:00",
+ "last_checked": "2026-11-17T09:45:00-05:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

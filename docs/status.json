@@ -1,6 +1,90 @@
 {
  "runs": [
   {
+   "time": "2026-11-18T09:15:00-05:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/44313436604",
+   "kind": "premarket",
+   "universe": 2053,
+   "downloaded": 2053,
+   "aligned": 1096,
+   "market": "S&P fut +0.2% \u00b7 Nasdaq fut +0.3% \u00b7 VIX 23.8 (elevated, options pricier)",
+   "skipped_earnings": [],
+   "skipped_pricey": [
+    "MU",
+    "SNDK"
+   ],
+   "picks": [
+    {
+     "ticker": "SPY",
+     "direction": "PUTS",
+     "price": 732.44,
+     "stop": 772.49,
+     "premarket": 733.62,
+     "day_chg": 0.16
+    },
+    {
+     "ticker": "QQQ",
+     "direction": "PUTS",
+     "price": 656.95,
+     "stop": 709.67,
+     "premarket": 660.57,
+     "day_chg": 0.55
+    },
+    {
+     "ticker": "IWM",
+     "direction": "PUTS",
+     "price": 269.05,
+     "stop": 286.43,
+     "premarket": 268.13,
+     "day_chg": -0.34
+    },
+    {
+     "ticker": "NVDA",
+     "direction": "PUTS",
+     "price": 155.46,
+     "stop": 187.75,
+     "premarket": 159.1,
+     "day_chg": 2.34
+    },
+    {
+     "ticker": "AAPL",
+     "direction": "CALLS",
+     "price": 351.91,
+     "stop": 333.0,
+     "premarket": 350.92,
+     "day_chg": -0.28
+    },
+    {
+     "ticker": "AMZN",
+     "direction": "CALLS",
+     "price": 257.89,
+     "stop": 239.56,
+     "premarket": 259.78,
+     "day_chg": 0.73
+    },
+    {
+     "ticker": "INTC",
+     "direction": "PUTS",
+     "price": 55.17,
+     "stop": 68.66,
+     "premarket": 55.35,
+     "day_chg": 0.33
+    },
+    {
+     "ticker": "TSM",
+     "direction": "PUTS",
+     "price": 359.69,
+     "stop": 423.25,
+     "premarket": 369.0,
+     "day_chg": 2.59
+    }
+   ],
+   "notified": true,
+   "result": "premarket sent",
+   "seconds": 178
+  },
+  {
    "time": "2026-11-17T16:15:01-05:00",
    "trigger": "keeper",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/44169946580",
@@ -7173,7 +7257,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-11-17T16:15:01-05:00",
+ "last_checked": "2026-11-18T09:15:00-05:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

@@ -1,6 +1,96 @@
 {
  "runs": [
   {
+   "time": "2026-11-20T09:15:00-05:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/44740781991",
+   "kind": "premarket",
+   "universe": 2053,
+   "downloaded": 2053,
+   "aligned": 1103,
+   "market": "S&P fut -0.2% \u00b7 Nasdaq fut -0.4% \u00b7 VIX 30.1 (high fear, options expensive)",
+   "skipped_earnings": [],
+   "skipped_pricey": [
+    "SPY",
+    "QQQ",
+    "MU",
+    "AVGO",
+    "TSM",
+    "MRVL",
+    "LITE",
+    "BE"
+   ],
+   "picks": [
+    {
+     "ticker": "IWM",
+     "direction": "PUTS",
+     "price": 264.22,
+     "stop": 284.6,
+     "premarket": 263.87,
+     "day_chg": -0.13
+    },
+    {
+     "ticker": "NVDA",
+     "direction": "PUTS",
+     "price": 145.98,
+     "stop": 185.26,
+     "premarket": 142.96,
+     "day_chg": -2.07
+    },
+    {
+     "ticker": "AMZN",
+     "direction": "CALLS",
+     "price": 257.37,
+     "stop": 239.56,
+     "premarket": 252.99,
+     "day_chg": -1.7
+    },
+    {
+     "ticker": "SNDK",
+     "direction": "PUTS",
+     "price": 94.39,
+     "stop": 133.89,
+     "premarket": 88.68,
+     "day_chg": -6.05
+    },
+    {
+     "ticker": "ORCL",
+     "direction": "PUTS",
+     "price": 110.57,
+     "stop": 137.13,
+     "premarket": 107.4,
+     "day_chg": -2.87
+    },
+    {
+     "ticker": "PLTR",
+     "direction": "PUTS",
+     "price": 153.68,
+     "stop": 180.82,
+     "premarket": 148.38,
+     "day_chg": -3.45
+    },
+    {
+     "ticker": "MRNA",
+     "direction": "PUTS",
+     "price": 199.33,
+     "stop": 248.79,
+     "premarket": 198.88,
+     "day_chg": -0.23
+    },
+    {
+     "ticker": "NBIS",
+     "direction": "PUTS",
+     "price": 96.92,
+     "stop": 154.87,
+     "premarket": 93.8,
+     "day_chg": -3.22
+    }
+   ],
+   "notified": true,
+   "result": "premarket sent",
+   "seconds": 236
+  },
+  {
    "time": "2026-11-19T16:15:00-05:00",
    "trigger": "keeper",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/44609299988",
@@ -8091,7 +8181,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-11-19T16:15:00-05:00",
+ "last_checked": "2026-11-20T09:15:00-05:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

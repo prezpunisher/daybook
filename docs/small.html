@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Small Account</title>
+<style>
+:root {
+  --surface-0: #f5f4f1; --surface-1: #fcfcfb; --border: #e3e2dd;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #7a7974;
+  --pos: #1f9e6e; --neg: #e34948; --warn: #b7791f; --mid: #f0efec;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --pos: #18a070; --neg: #e66767; --warn: #d69e2e; --mid: #383835;
+  }
+}
+:root[data-theme="dark"] {
+  --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+  --pos: #18a070; --neg: #e66767; --warn: #d69e2e; --mid: #383835;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 28px 16px 64px; }
+a { color: inherit; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; justify-content: space-between; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 17px; margin: 32px 0 10px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+h2 .meta { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+.sub { color: var(--text-secondary); margin: 6px 0 0; font-size: 14px; }
+.btn { display: inline-block; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; text-decoration: none;
+  font-size: 14px; background: var(--surface-1); }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.rules { margin: 0; padding-left: 20px; }
+.rules li { margin: 4px 0; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.tile .k { color: var(--text-muted); font-size: 12px; }
+.tile .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+th { color: var(--text-muted); font-weight: 500; font-size: 12px; }
+tr.bot td { font-weight: 600; }
+.pos { color: var(--pos); } .neg { color: var(--neg); } .muted { color: var(--text-muted); }
+.months { display: flex; flex-wrap: wrap; gap: 6px; }
+.m { border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; font-size: 12px; background: var(--surface-1); }
+.m b { font-variant-numeric: tabular-nums; }
+.empty { color: var(--text-muted); padding: 14px 0; }
+@media (max-width: 600px) { .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Small Account</h1>
+      <p class="sub">1 contract at $0.50 or less · 1 trade a day · real option prices · paper results, not the account</p>
+    </div>
+    <a class="btn" href="index.html">← Daybook</a>
+  </header>
+
+  <h2>The rules</h2>
+  <section class="card">
+    <ol class="rules">
+      <li><b>#2v</b> · Gap and go, with the daily trend, SPY moving with it, VIX 22 or under → hold to 2:50 pm, stop −30%.</li>
+      <li><b>#5</b> · Gap and go, wrong side of the 15m EMA50, SPY moving against → hold to 2:50 pm, stop −30%.</li>
+      <li><b>All 3</b> · Daybook's pick when the 15m EMA50, MACD and CCI all agree → sell at +10%, stop −20%, out by 2:50 pm.</li>
+      <li>Signals at 8:45 am. The bot takes one a day in that order, using the contract nearest the stock price that costs $0.50 or less.</li>
+    </ol>
+  </section>
+
+  <h2>Tracking <span class="meta" id="liveMeta"></span></h2>
+  <div class="tiles" id="liveTiles"></div>
+  <div class="scroll" style="margin-top:10px"><table id="liveTable"></table></div>
+  <h2>Recent trades <span class="meta">every plan's trade, ★ = the one the bot would take</span></h2>
+  <div class="scroll"><table id="liveRows"></table></div>
+
+  <h2>2-year test <span class="meta" id="testMeta"></span></h2>
+  <div class="scroll"><table id="testTable"></table></div>
+  <h2>The bot by month <span class="meta">2-year test, 1 trade a day</span></h2>
+  <div class="months" id="months"></div>
+  <p class="sub" id="foot"></p>
+</main>
+<script>
+const SRC = "https://prezpunisher.github.io/trade-advisor/cheap.json";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = v => v == null ? "—" : (v < 0 ? "−$" : "+$") + Math.abs(v).toFixed(Math.abs(v) < 10 ? 2 : 0);
+const cls = v => v == null ? "muted" : v > 0 ? "pos" : v < 0 ? "neg" : "muted";
+const pct = v => v == null ? "—" : Math.round(v * 100) + "%";
+const NAME = { "2v": "#2v", "5": "#5", "A3": "All 3", "bot": "The bot (1 a day)" };
+
+function table(el, summary) {
+  const rows = summary.map(s => `<tr class="${s.id === "bot" ? "bot" : ""}">
+    <td>${esc(NAME[s.id] || s.id)}</td><td>${s.n || 0}</td><td>${pct(s.win)}</td>
+    <td class="${cls(s.avg)}">${money(s.avg)}</td><td class="${cls(s.total)}">${money(s.total)}</td>
+    <td class="hide-sm neg">${s.max_drawdown ? "−$" + Math.round(s.max_drawdown) : "—"}</td>
+    <td class="hide-sm">${s.loss_streak ?? "—"}</td>
+    <td class="hide-sm">${s.months ? s.months_up + " of " + s.months : "—"}</td></tr>`).join("");
+  el.innerHTML = `<thead><tr><th>Plan</th><th>Trades</th><th>Won</th><th>Avg / trade</th><th>Total</th>
+    <th class="hide-sm">Worst drop</th><th class="hide-sm">Loss streak</th><th class="hide-sm">Months up</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function botPicks(rows) {
+  const order = ["2v", "5", "A3"], seen = {};
+  [...rows].sort((a, b) => a.date.localeCompare(b.date) || order.indexOf(a.plan) - order.indexOf(b.plan)
+    || a.entry_time.localeCompare(b.entry_time) || a.ticker.localeCompare(b.ticker))
+    .forEach(r => { if (!seen[r.date]) seen[r.date] = r; });
+  return new Set(Object.values(seen));
+}
+
+fetch(SRC + "?t=" + Date.now()).then(r => r.json()).then(d => {
+  const live = d.live || { rows: [], summary: [], started: "2026-11-23", days: [] };
+  const bot = (live.summary || []).find(s => s.id === "bot") || { n: 0 };
+  $("liveMeta").textContent = `since ${live.started} · ${(live.days || []).length} trading days booked · updated ${d.updated?.replace("T", " ") || ""}`;
+  $("liveTiles").innerHTML = [["Bot trades", bot.n || 0, ""], ["Won", pct(bot.win), ""],
+    ["Total", money(bot.total ?? 0), cls(bot.total)], ["Avg / trade", money(bot.avg), cls(bot.avg)]]
+    .map(([k, v, c]) => `<div class="tile"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join("");
+  if ((live.summary || []).length) table($("liveTable"), live.summary);
+  const picks = botPicks(live.rows || []);
+  const recent = [...(live.rows || [])].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 40);
+  $("liveRows").innerHTML = recent.length ? `<thead><tr><th>Day</th><th>Plan</th><th>Contract</th><th>Buy</th><th>Sell</th>
+    <th class="hide-sm">Why</th><th>P&amp;L</th></tr></thead><tbody>` + recent.map(r => `<tr>
+    <td>${picks.has(r) ? "★ " : ""}${esc(r.date.slice(5))} ${esc(r.ticker)} ${r.dir === "CALLS" ? "▲" : "▼"}</td>
+    <td>${esc(NAME[r.plan])}</td><td class="muted">${esc(r.symbol)}</td>
+    <td>$${r.entry.toFixed(2)} <span class="muted">${esc(r.entry_time)}</span></td>
+    <td>$${r.exit.toFixed(2)} <span class="muted">${esc(r.exit_time)}</span></td>
+    <td class="hide-sm muted">${esc(r.why)}</td><td class="${cls(r.pnl)}">${money(r.pnl)}</td></tr>`).join("") + "</tbody>"
+    : `<tbody><tr><td class="empty">No trades booked yet. The first day is booked after the close.</td></tr></tbody>`;
+
+  const t = d.test;
+  table($("testTable"), t.summary);
+  const b = t.summary.find(s => s.id === "bot");
+  $("testMeta").textContent = `${b.first} to ${b.last} · ${d.slip ? "$" + d.slip.toFixed(2) + " spread cost each way" : ""}`;
+  $("months").innerHTML = (b.monthly || []).map(m => `<span class="m">${esc(m.m)} <b class="${cls(m.total)}">${money(m.total)}</b></span>`).join("");
+  $("foot").textContent = "All 3 has only been recorded since Oct 26, 2026, so its test is short. Prices are real 1-minute trades from Massive; a fill can be a bit worse than the price shown.";
+}).catch(() => { $("liveTiles").innerHTML = `<p class="empty">Couldn't load the results. Try again in a minute.</p>`; });
+</script>
+</body>
+</html>

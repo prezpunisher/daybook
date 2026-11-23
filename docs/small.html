@@ -101,7 +101,7 @@ tr.bot td { font-weight: 600; }
   <header>
     <div>
       <h1>Small Account</h1>
-      <p class="sub">1 contract at $0.50 or less · 1 trade a day · real option prices · paper results, not the account</p>
+      <p class="sub">1 contract each at $0.25 or less · up to 4 trades a day, $100 at most · real option prices · paper results, not the account</p>
     </div>
     <a class="btn" href="index.html">← Daybook</a>
   </header>
@@ -113,7 +113,7 @@ tr.bot td { font-weight: 600; }
       <li><b>#5</b> · Gap and go, wrong side of the 15m EMA50, SPY moving against → hold to 2:50 pm, stop −30%.</li>
       <li><b>All 3</b> · Daybook's pick when the 15m EMA50, MACD and CCI all agree → hold to 2:50 pm, stop −30%.</li>
       <li>Stocks on your no-trade list are never taken.</li>
-      <li>Signals at 8:45 am. The bot takes one a day in that order, using the contract nearest the stock price that costs $0.50 or less.</li>
+      <li>Signals at 8:45 am. The bot takes up to 4 a day in that order, one per stock, using the contract nearest the stock price that costs $0.25 or less, while the day's total stays within $100. (Before Nov 22, 2026: one a day at $0.50.)</li>
     </ol>
   </section>
 
@@ -136,12 +136,12 @@ tr.bot td { font-weight: 600; }
     <div id="calDay" class="dlist"><p class="muted" style="margin:0">Click a shaded day to see its trades.</p></div>
   </section>
 
-  <h2>Recent trades <span class="meta">every plan's trade, ★ = the one the bot would take</span></h2>
+  <h2>Recent trades <span class="meta">every plan's trade, ★ = the ones the bot would take</span></h2>
   <div class="scroll"><table id="liveRows"></table></div>
 
   <h2>2-year test <span class="meta" id="testMeta"></span></h2>
   <div class="scroll"><table id="testTable"></table></div>
-  <h2>The bot by month <span class="meta">2-year test, 1 trade a day</span></h2>
+  <h2>The bot by month <span class="meta">2-year test, the bot's trades</span></h2>
   <div class="months" id="months"></div>
   <p class="sub" id="foot"></p>
 </main>
@@ -152,7 +152,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 const money = v => v == null ? "—" : (v < 0 ? "−$" : "+$") + Math.abs(v).toFixed(Math.abs(v) < 10 ? 2 : 0);
 const cls = v => v == null ? "muted" : v > 0 ? "pos" : v < 0 ? "neg" : "muted";
 const pct = v => v == null ? "—" : Math.round(v * 100) + "%";
-const NAME = { "2v": "#2v", "5": "#5", "A3": "All 3", "bot": "The bot (1 a day)" };
+const NAME = { "2v": "#2v", "5": "#5", "A3": "All 3", "bot": "The bot (up to 4 a day)" };
 
 function table(el, summary) {
   const rows = summary.map(s => `<tr class="${s.id === "bot" ? "bot" : ""}">
@@ -165,12 +165,10 @@ function table(el, summary) {
     <th class="hide-sm">Worst drop</th><th class="hide-sm">Loss streak</th><th class="hide-sm">Months up</th></tr></thead><tbody>${rows}</tbody>`;
 }
 
+// The bot's trades are flagged in cheap.json ("bot": true) by cheap_test.py's bot_rows(), so the page and the data
+// always agree: up to 4 a day, one per ticker, $100 a day, in plan order.
 function botPicks(rows) {
-  const order = ["2v", "5", "A3"], seen = {};
-  [...rows].sort((a, b) => a.date.localeCompare(b.date) || order.indexOf(a.plan) - order.indexOf(b.plan)
-    || a.entry_time.localeCompare(b.entry_time) || a.ticker.localeCompare(b.ticker))
-    .forEach(r => { if (!seen[r.date]) seen[r.date] = r; });
-  return new Set(Object.values(seen));
+  return new Set(rows.filter(r => r.bot));
 }
 
 function calendar(rows) {

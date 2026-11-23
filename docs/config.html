@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Automated Config</title>
+<style>
+:root {
+  --surface-0: #f5f4f1; --surface-1: #fcfcfb; --border: #e3e2dd;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #7a7974;
+  --pos: #1f9e6e; --neg: #e34948; --warn: #b7791f; --mid: #f0efec; --accent: #2f6fdb;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c;
+    --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --pos: #18a070; --neg: #e66767; --warn: #d69e2e; --mid: #383835; --accent: #6b9cf0;
+  }
+}
+:root[data-theme="dark"] {
+  --surface-0: #121211; --surface-1: #1a1a19; --border: #2e2e2c;
+  --text-primary: #f0efec; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+  --pos: #18a070; --neg: #e66767; --warn: #d69e2e; --mid: #383835; --accent: #6b9cf0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface-0); color: var(--text-primary);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 960px; margin: 0 auto; padding: 28px 16px 64px; }
+a { color: inherit; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; justify-content: space-between; }
+h1 { font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+h2 { font-size: 17px; margin: 32px 0 10px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+h2 .meta { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+h3 { font-size: 15px; margin: 0; }
+.sub { color: var(--text-secondary); margin: 6px 0 0; font-size: 14px; }
+.btn { display: inline-block; padding: 7px 14px; border: 1px solid var(--border); border-radius: 8px; text-decoration: none;
+  font: inherit; font-size: 14px; background: var(--surface-1); color: var(--text-primary); cursor: pointer; }
+.btn.primary { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.small { padding: 3px 9px; font-size: 13px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.tile .k { color: var(--text-muted); font-size: 12px; }
+.tile .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+label.f { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-secondary); }
+input, select, textarea { font: inherit; font-size: 14px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface-0); color: var(--text-primary); width: 100%; }
+textarea { min-height: 64px; resize: vertical; }
+.plan { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-top: 10px; background: var(--surface-1); }
+.plan.off { opacity: .6; }
+.plan-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }
+.plan-top .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pill { font-size: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; color: var(--text-secondary); }
+.filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 12px; margin-top: 10px; }
+.changed { outline: 2px solid var(--accent); outline-offset: 1px; }
+.note { font-size: 13px; color: var(--text-secondary); }
+.warn { color: var(--warn); }
+.bad { color: var(--neg); }
+.good { color: var(--pos); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
+th, td { text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; white-space: normal; }
+th { color: var(--text-muted); font-weight: 500; font-size: 12px; }
+.steps { margin: 0; padding-left: 20px; } .steps li { margin: 4px 0; }
+.empty { color: var(--text-muted); padding: 12px 0; }
+@media (max-width: 600px) { .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Automated Config</h1>
+      <p class="sub">The small Robinhood account's trading rules. Edit a draft, backtest it on 2 years of real option prices, then make it live.</p>
+    </div>
+    <div class="actions" style="margin:0"><a class="btn" href="small.html">Small account</a><a class="btn" href="index.html">← Daybook</a></div>
+  </header>
+
+  <h2>Live now <span class="meta" id="liveMeta"></span></h2>
+  <div class="tiles" id="liveTiles"></div>
+
+  <h2>Draft <span class="meta" id="draftMeta"></span></h2>
+  <section class="card">
+    <h3>Account limits</h3>
+    <div class="grid2" style="margin-top:10px">
+      <label class="f">Max price per contract ($)<input type="number" step="0.01" min="0.05" id="maxPrice"></label>
+      <label class="f">Trades per day<input type="number" step="1" min="1" id="perDay"></label>
+      <label class="f">Daily budget ($)<input type="number" step="5" min="10" id="budget"></label>
+    </div>
+    <p class="note" id="limitNote"></p>
+  </section>
+
+  <h2>Plans <span class="meta">checked in this order every morning at 8:45</span></h2>
+  <div id="plans"></div>
+  <div class="actions"><button class="btn" id="addPlan">+ Add a gap-and-go plan</button></div>
+
+  <h2>Stocks for gap-and-go plans</h2>
+  <section class="card">
+    <textarea id="tickers" aria-label="Stock symbols, separated by spaces or commas"></textarea>
+    <p class="note">Stocks on Daybook's no-trade list are always skipped. New stocks can be backtested; going live with them needs their price history cached first (ask Claude).</p>
+  </section>
+
+  <h2>Run it</h2>
+  <section class="card">
+    <label class="f">Name this backtest<input id="btName" maxlength="60" placeholder="e.g. tighter stop at 25%"></label>
+    <p class="note" id="diff" style="margin-top:10px"></p>
+    <p class="note bad" id="errors"></p>
+    <div class="actions">
+      <a class="btn primary" id="runBt" target="_blank" rel="noopener">Run backtest</a>
+      <button class="btn" id="reset">Reset to live</button>
+    </div>
+    <p class="note" style="margin-top:10px">Run backtest opens a pre-filled GitHub issue in trade-advisor; submit it while signed in. A GitHub job replays the draft and posts the results below and on the issue (10 to 40 minutes). Nothing changes for the bot until you press <b>Make live</b> on a finished backtest.</p>
+  </section>
+
+  <h2>Backtests <span class="meta">newest first · 1 contract per trade, real 1-minute prices from Massive</span></h2>
+  <div class="scroll"><table id="bts"></table></div>
+
+  <h2>How it works</h2>
+  <section class="card">
+    <ol class="steps">
+      <li><b>strategy.json</b> in trade-advisor holds the live rules. The bot reads it every morning; the Small account page tests it.</li>
+      <li><b>Run backtest</b> sends your draft to a GitHub job, which checks it and replays it on 2 years of real option prices.</li>
+      <li><b>Make live</b> copies a finished backtest's rules into strategy.json. Only drafts within the bot's hard limits can go live.</li>
+      <li>The bot's guard (in the private rh-bot repo) enforces its own ceilings, so nothing on this page can make it trade bigger than those.</li>
+      <li>Every change is a GitHub issue and a commit, so there's a full history of who changed what and when.</li>
+    </ol>
+  </section>
+</main>
+<script>
+const RAW = "https://raw.githubusercontent.com/prezpunisher/trade-advisor/main/";
+const ISSUES = "https://github.com/prezpunisher/trade-advisor/issues/new";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = v => v == null ? "—" : (v < 0 ? "−$" : "+$") + Math.abs(v).toFixed(Math.abs(v) < 10 ? 2 : 0);
+const cls = v => v == null ? "" : v > 0 ? "good" : v < 0 ? "bad" : "";
+const pct = v => v == null ? "—" : Math.round(v * 100) + "%";
+const clone = o => JSON.parse(JSON.stringify(o));
+const DRAFT_KEY = "automated-config-draft";
+let LIVE, OPT, draft;
+
+const VIX_CHOICES = [
+  ["", "Any"], ["VIX under 16|VIX 16–22", "22 or under"], ["VIX under 16", "Under 16"], ["VIX 16–22", "16 to 22"],
+  ["VIX 16–22|VIX over 22", "16 or over"], ["VIX over 22", "Over 22"]];
+
+async function get(path) {
+  const r = await fetch(RAW + path + "?t=" + Date.now());
+  if (!r.ok) throw new Error(path + " " + r.status);
+  return r.json();
+}
+
+function saveDraft() { try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch (e) {} }
+function loadDraft() { try { return JSON.parse(localStorage.getItem(DRAFT_KEY) || "null"); } catch (e) { return null; } }
+
+function strip(c) {
+  const out = clone(c);
+  ["version", "status", "updated", "from_backtest", "note"].forEach(k => delete out[k]);
+  return out;
+}
+
+function liveTiles(cheap) {
+  const a = LIVE.account, on = LIVE.plans.filter(p => p.on !== false).map(p => p.id);
+  const bot = cheap && cheap.test.summary.find(s => s.id === "bot");
+  $("liveMeta").textContent = `version ${LIVE.version} · updated ${LIVE.updated}` + (LIVE.from_backtest ? ` · from backtest #${LIVE.from_backtest}` : "");
+  $("liveTiles").innerHTML = [
+    ["Max per contract", "$" + a.max_price.toFixed(2)], ["Trades per day", a.trades_per_day], ["Daily budget", "$" + a.daily_budget],
+    ["Plans on", on.join(", ")], ["Test total", bot ? money(bot.total) : "—", bot && cls(bot.total)],
+    ["Test worst drop", bot ? "−$" + Math.round(bot.max_drawdown) : "—", "bad"]]
+    .map(([k, v, c]) => `<div class="tile"><div class="k">${k}</div><div class="v ${c || ""}">${esc(v)}</div></div>`).join("");
+}
+
+function planCard(p, i) {
+  const live = LIVE.plans.find(q => q.id === p.id);
+  const gap = p.setup === "Gap and go";
+  const ch = (a, b) => JSON.stringify(a ?? null) !== JSON.stringify(b ?? null) ? "changed" : "";
+  const filters = gap ? Object.entries(OPT.filters).map(([g, labels]) => {
+    const cur = p.filters[g];
+    const curKey = Array.isArray(cur) ? cur.join("|") : (cur || "");
+    const choices = g === "VIX" ? VIX_CHOICES : [["", "Any"], ...labels.map(l => [l, l])];
+    const lv = live && live.filters[g]; const liveKey = Array.isArray(lv) ? lv.join("|") : (lv || "");
+    return `<label class="f">${esc(g)}<select data-i="${i}" data-filter="${esc(g)}" class="${live && curKey !== liveKey ? "changed" : ""}">
+      ${choices.map(([v, t]) => `<option value="${esc(v)}" ${v === curKey ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>`;
+  }).join("") : `<p class="note" style="grid-column:1/-1">Daybook's morning watchlist pick, taken when the 15m EMA50, MACD and CCI all agree with it. No extra filters.</p>`;
+  const ex = p.exit, lx = live ? live.exit : {};
+  return `<div class="plan ${p.on === false ? "off" : ""}">
+    <div class="plan-top"><div class="left">
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-i="${i}" data-k="on" ${p.on !== false ? "checked" : ""} style="width:auto"> <b>#${esc(p.id)}</b></label>
+      <span class="pill">${esc(p.setup)}</span>${live ? "" : `<span class="pill warn">new</span>`}</div>
+      <div class="left">
+        <button class="btn small" data-move="${i}" data-dir="-1" ${i === 0 ? "disabled" : ""} aria-label="Move up">↑</button>
+        <button class="btn small" data-move="${i}" data-dir="1" ${i === draft.plans.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>
+        ${p.id !== "A3" ? `<button class="btn small" data-remove="${i}">Remove</button>` : ""}
+      </div></div>
+    <label class="f" style="margin-top:8px">Name<input data-i="${i}" data-k="name" value="${esc(p.name)}" maxlength="70"></label>
+    <div class="grid2" style="margin-top:8px">
+      <label class="f">Stop loss (%)<input type="number" step="1" min="5" max="90" data-i="${i}" data-x="stop" value="${ex.stop == null ? "" : Math.round(ex.stop * 100)}" class="${ch(ex.stop, lx.stop)}"></label>
+      <label class="f">Profit target (%), blank = none<input type="number" step="1" min="2" data-i="${i}" data-x="target" value="${ex.target == null ? "" : Math.round(ex.target * 100)}" class="${ch(ex.target, lx.target)}"></label>
+      <label class="f">Sell by (CT)<input type="time" min="08:45" max="14:59" data-i="${i}" data-x="cut" value="${esc(ex.cut)}" class="${ch(ex.cut, lx.cut)}"></label>
+    </div>
+    <div class="filters">${filters}</div></div>`;
+}
+
+function liveProblems(c) {
+  const L = OPT.live_limits, e = [];
+  if (c.account.max_price > L.max_price) e.push(`max price above $${L.max_price.toFixed(2)}`);
+  if (c.account.trades_per_day > L.trades_per_day) e.push(`more than ${L.trades_per_day} trades a day`);
+  if (c.account.daily_budget > L.daily_budget) e.push(`budget above $${L.daily_budget}`);
+  c.plans.forEach(p => {
+    if (p.exit.target != null) e.push(`#${p.id} has a profit target (Robinhood can't hold a target and a stop together)`);
+    if (p.exit.cut !== L.cut) e.push(`#${p.id} sells at ${p.exit.cut}, not ${L.cut}`);
+    if (p.exit.stop == null) e.push(`#${p.id} has no stop`);
+  });
+  const known = new Set(LIVE.tickers), extra = c.tickers.filter(t => !known.has(t));
+  if (extra.length) e.push(`new stocks ${extra.join(", ")} need their history cached first`);
+  return e;
+}
+
+function errors(c) {
+  const e = [];
+  if (!(c.account.max_price >= 0.05)) e.push("Max price must be at least $0.05.");
+  if (!(c.account.trades_per_day >= 1)) e.push("Trades per day must be at least 1.");
+  if (!(c.account.daily_budget >= 10)) e.push("Daily budget must be at least $10.");
+  if (!c.plans.some(p => p.on !== false)) e.push("Turn at least one plan on.");
+  c.plans.forEach(p => { if (p.exit.stop != null && (p.exit.stop < 0.05 || p.exit.stop > 0.9)) e.push(`#${p.id}: stop must be 5% to 90%.`); });
+  if (!c.tickers.length) e.push("List at least one stock.");
+  return e;
+}
+
+function diffs(c) {
+  const out = [], L = LIVE;
+  const a = c.account, la = L.account;
+  if (a.max_price !== la.max_price) out.push(`max price $${la.max_price} → $${a.max_price}`);
+  if (a.trades_per_day !== la.trades_per_day) out.push(`trades per day ${la.trades_per_day} → ${a.trades_per_day}`);
+  if (a.daily_budget !== la.daily_budget) out.push(`budget $${la.daily_budget} → $${a.daily_budget}`);
+  if (c.order.join() !== L.order.join()) out.push(`order ${L.order.join(" → ")} becomes ${c.order.join(" → ")}`);
+  c.plans.forEach(p => {
+    const q = L.plans.find(x => x.id === p.id);
+    if (!q) return out.push(`new plan #${p.id}`);
+    if ((p.on !== false) !== (q.on !== false)) out.push(`#${p.id} ${p.on !== false ? "on" : "off"}`);
+    if (JSON.stringify(p.exit) !== JSON.stringify(q.exit)) out.push(`#${p.id} exit changed`);
+    if (JSON.stringify(p.filters) !== JSON.stringify(q.filters)) out.push(`#${p.id} filters changed`);
+  });
+  L.plans.forEach(q => { if (!c.plans.find(p => p.id === q.id)) out.push(`#${q.id} removed`); });
+  if (c.tickers.join() !== L.tickers.join()) out.push("stock list changed");
+  return out;
+}
+
+function render() {          // rebuilds the whole draft form
+  draft.order = draft.plans.map(p => p.id);
+  $("maxPrice").value = draft.account.max_price; $("perDay").value = draft.account.trades_per_day; $("budget").value = draft.account.daily_budget;
+  const L = OPT.live_limits;
+  $("limitNote").innerHTML = `The bot's hard limits: <b>$${L.max_price.toFixed(2)}</b> per contract, <b>${L.trades_per_day}</b> trades a day, <b>$${L.daily_budget}</b> a day. You can backtest beyond them; going live beyond them needs a change to the bot's guard first.`;
+  $("plans").innerHTML = draft.plans.map(planCard).join("");
+  if (document.activeElement !== $("tickers")) $("tickers").value = draft.tickers.join(" ");
+  refresh();
+}
+
+function refresh() {         // updates the summary, checks and the Run backtest link without touching the form
+  draft.order = draft.plans.map(p => p.id);
+  ["maxPrice", "perDay", "budget"].forEach((id, k) => {
+    const key = ["max_price", "trades_per_day", "daily_budget"][k];
+    $(id).classList.toggle("changed", draft.account[key] !== LIVE.account[key]);
+  });
+  const d = diffs(draft), e = errors(draft), lp = liveProblems(draft);
+  $("draftMeta").textContent = d.length ? `${d.length} change${d.length > 1 ? "s" : ""} from live · saved in this browser` : "same as live";
+  $("diff").innerHTML = (d.length ? "<b>Changes:</b> " + esc(d.join(" · ")) : "No changes yet: this draft matches the live rules.")
+    + (lp.length ? `<br><span class="warn">Can be backtested, but can't go live as is: ${esc(lp.join("; "))}.</span>` : "");
+  $("errors").textContent = e.join(" ");
+  const name = $("btName").value.trim() || (d.length ? d.slice(0, 3).join(", ") : "same as live");
+  const body = `Draft from the Automated Config page. Submit this issue to run the backtest; a GitHub job replies here with the results.\n\n${d.length ? "Changes from live: " + d.join("; ") + "\n\n" : ""}\`\`\`json\n${JSON.stringify(strip(draft))}\n\`\`\``;
+  const url = `${ISSUES}?title=${encodeURIComponent("Backtest config: " + name)}&body=${encodeURIComponent(body)}`;
+  const btn = $("runBt"), tooLong = url.length > 7800;
+  if (tooLong) $("errors").textContent += " The draft is too long to send in one issue; remove some stocks.";
+  if (e.length || tooLong) { btn.removeAttribute("href"); btn.setAttribute("aria-disabled", "true"); btn.style.opacity = .45; }
+  else { btn.href = url; btn.removeAttribute("aria-disabled"); btn.style.opacity = 1; }
+  saveDraft();
+}
+
+function backtests(idx) {
+  const runs = idx.runs || [];
+  if (!runs.length) { $("bts").innerHTML = `<tbody><tr><td class="empty">No backtests yet. Edit the draft and press Run backtest.</td></tr></tbody>`; return; }
+  $("bts").innerHTML = `<thead><tr><th>Backtest</th><th>Trades</th><th class="hide-sm">Won</th><th>Total</th><th class="hide-sm">Worst drop</th><th></th></tr></thead><tbody>` +
+    runs.map(r => {
+      const b = r.bot || {}, isLive = LIVE.from_backtest === r.id;
+      const make = `${ISSUES}?title=${encodeURIComponent("Make live: backtest #" + r.id)}&body=${encodeURIComponent("Make backtest #" + r.id + " (" + r.name + ") the live strategy. Submit to confirm; a GitHub job replies here.")}`;
+      return `<tr><td><b>#${r.id}</b> ${esc(r.name)}<br><span class="note">${esc((r.created || "").replace("T", " "))}</span></td>
+        <td>${b.n ?? "—"}</td><td class="hide-sm">${pct(b.win)}</td><td class="${cls(b.total)}">${money(b.total)}</td>
+        <td class="hide-sm bad">${b.max_drawdown != null ? "−$" + Math.round(b.max_drawdown) : "—"}</td>
+        <td><button class="btn small" data-load="${r.id}">Load</button>
+        ${isLive ? `<span class="pill good">live</span>` : r.can_go_live ? `<a class="btn small primary" href="${esc(make)}" target="_blank" rel="noopener">Make live</a>` : `<span class="pill" title="Outside the bot's limits">test only</span>`}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+function apply(t) {           // copies one field into the draft
+  const i = t.dataset.i;
+  if (t.id === "maxPrice") draft.account.max_price = +t.value;
+  else if (t.id === "perDay") draft.account.trades_per_day = Math.round(+t.value);
+  else if (t.id === "budget") draft.account.daily_budget = +t.value;
+  else if (t.id === "tickers") draft.tickers = [...new Set(t.value.toUpperCase().split(/[\s,]+/).filter(Boolean))];
+  else if (i != null) {
+    const p = draft.plans[+i];
+    if (t.dataset.k === "on") p.on = t.checked;
+    else if (t.dataset.k === "name") p.name = t.value;
+    else if (t.dataset.x === "stop") p.exit.stop = t.value === "" ? null : +t.value / 100;
+    else if (t.dataset.x === "target") p.exit.target = t.value === "" ? null : +t.value / 100;
+    else if (t.dataset.x === "cut") p.exit.cut = t.value;
+    else if (t.dataset.filter) {
+      const g = t.dataset.filter;
+      if (!t.value) delete p.filters[g]; else p.filters[g] = t.value.includes("|") ? t.value.split("|") : t.value;
+    }
+  }
+}
+// typing updates the draft and the summary; leaving a field (or any dropdown/checkbox) redraws the form
+document.addEventListener("input", ev => { apply(ev.target); if (ev.target.tagName === "SELECT" || ev.target.type === "checkbox") render(); else refresh(); });
+document.addEventListener("change", ev => { apply(ev.target); if (ev.target.id !== "btName") render(); });
+
+document.addEventListener("click", async ev => {
+  const t = ev.target;
+  if (t.dataset.move != null) {
+    const i = +t.dataset.move, j = i + +t.dataset.dir;
+    [draft.plans[i], draft.plans[j]] = [draft.plans[j], draft.plans[i]]; render();
+  } else if (t.dataset.remove != null) {
+    draft.plans.splice(+t.dataset.remove, 1); render();
+  } else if (t.id === "addPlan") {
+    let n = 1; while (draft.plans.some(p => p.id === "g" + n)) n++;
+    draft.plans.push({ id: "g" + n, on: true, name: "Gap and go · new plan", setup: "Gap and go", filters: {},
+      exit: { target: null, stop: 0.30, cut: "14:50", lock: null } }); render();
+  } else if (t.id === "reset") {
+    draft = clone(LIVE); $("btName").value = ""; render();
+  } else if (t.dataset.load != null) {
+    try { const r = await get(`docs/backtests/${t.dataset.load}.json`); draft = clone(r.config); $("btName").value = ""; render(); window.scrollTo({ top: $("draftMeta").offsetTop - 20, behavior: "smooth" }); }
+    catch (e) { alert("Couldn't load that backtest yet. Try again in a minute."); }
+  }
+});
+
+(async () => {
+  try {
+    [LIVE, OPT] = await Promise.all([get("strategy.json"), get("config_options.json")]);
+  } catch (e) {
+    $("liveTiles").innerHTML = `<p class="empty">Couldn't load the live rules. Try again in a minute.</p>`; return;
+  }
+  LIVE.plans.forEach(p => { p.filters = p.filters || {}; p.exit.lock = p.exit.lock ?? null; });
+  const saved = loadDraft();
+  draft = saved && saved.plans && saved.account ? saved : clone(LIVE);
+  draft.plans.forEach(p => { p.filters = p.filters || {}; p.exit.lock = p.exit.lock ?? null; });
+  let cheap = null;
+  try { cheap = await (await fetch("https://prezpunisher.github.io/trade-advisor/cheap.json?t=" + Date.now())).json(); } catch (e) {}
+  liveTiles(cheap);
+  render();
+  try { backtests(await get("docs/backtests/index.json")); } catch (e) { backtests({ runs: [] }); }
+})();
+</script>
+</body>
+</html>

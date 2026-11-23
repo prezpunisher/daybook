@@ -137,6 +137,25 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
 .sellbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px;
   background: var(--surface-0); padding: 10px 0; margin-top: 8px; border-bottom: 1px solid var(--border); }
 .tag { font-size: 12px; padding: 1px 6px; border-radius: 5px; background: var(--mid); color: var(--text-secondary); }
+/* 2-year section */
+.viz-root { --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --grid: #e3e2dd; --axis: #7a7974; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .viz-root { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --grid: #2e2e2c; --axis: #8f8e86; } }
+:root[data-theme="dark"] .viz-root { --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --grid: #2e2e2c; --axis: #8f8e86; }
+.ly-ctl { gap: 8px; }
+.ly-ctl .seg { flex-wrap: wrap; }
+.ly-chart { margin-top: 12px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.ly-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ly-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 4px; font-size: 13px; color: var(--text-secondary); }
+.ly-legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: 3px; margin-right: 6px; }
+.ly-plot { position: relative; }
+.ly-plot svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ly-plot text { fill: var(--axis); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ly-tip { position: absolute; top: 0; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.12); min-width: 170px; z-index: 3; }
+.ly-tip div { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+.ly-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+#lyTable td.best { font-weight: 650; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
 </style>
 </head>
 <body>
@@ -176,6 +195,21 @@ details summary { cursor: pointer; color: var(--text-secondary); font-size: 14px
   <details class="more" data-key="shRows"><summary>Signals <span class="meta" id="shMeta"></span></summary>
     <div class="filters" id="shFilters"></div>
     <div id="shRows"></div></details>
+
+  <h2>The same strategy on 2 years of real prices <span class="meta" id="lyMeta"></span></h2>
+  <p class="lead">Every signal of the rule above since Feb 2025, bought at the first real 1-minute option trade after the candle closed, sized like the card (whole contracts up to $1,000). Five ways out compared on the same trades. Your no-trade stocks are left out. No trading costs.</p>
+  <div class="filters ly-ctl">
+    <span class="seg" id="lyPeriod"><button data-v="5d">5 days</button><button data-v="14">2 weeks</button><button data-v="30">30 days</button><button data-v="182">6 months</button><button data-v="365">1 year</button><button data-v="all" class="on">2 years</button></span>
+    <span class="seg" id="lySet"><button data-v="all" class="on">All signals</button><button data-v="trend">Daily trend agrees</button></span>
+  </div>
+  <div class="card viz-root" id="lyTable"></div>
+  <div class="viz-root ly-chart">
+    <div class="ly-head"><b id="lyChartTitle"></b><span class="seg" id="lyMode"><button data-v="total" class="on">Running total</button><button data-v="roll">20-day average per trade</button></span></div>
+    <div class="ly-legend" id="lyLegend"></div>
+    <div class="ly-plot" id="lyPlot"><div class="ly-tip" id="lyTip" hidden></div></div>
+    <p class="note" id="lyNote"></p>
+  </div>
+  <div class="card viz-root" id="lyTrend" style="margin-top:12px"></div>
 
   <h2>Backtest <span class="meta" id="btMeta"></span></h2>
   <div id="btCmp"></div>
@@ -399,6 +433,125 @@ Promise.all([getJson("research.json"), getJson("no_trade.json")]).then(([d, nt])
   }
   render();
 });
+</script>
+<script>
+// ---- 2-year section: cci_2y.json, columns [date, ticker, call?, trend agrees?, cci strong?, cost, ret per exit...]
+(() => {
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const usd = v => `${v >= 0 ? "+" : "−"}$${Math.abs(Math.round(v)).toLocaleString()}`;
+  const money = v => `<span class="${v >= 0 ? "pos" : "neg"}">${usd(v)}</span>`;
+  const day = d => new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" }).format(new Date(d + "T12:00:00Z"));
+  const addDays = (d, n) => new Date(Date.parse(d + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+  const COL = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)"];
+  let D = null, rows = [], period = "all", set = "all", mode = "total";
+
+  const segs = (id, fn) => $(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    [...$(id).children].forEach(x => x.classList.toggle("on", x === b)); fn(b.dataset.v); draw();
+  });
+  segs("lyPeriod", v => period = v); segs("lySet", v => set = v); segs("lyMode", v => mode = v);
+
+  const pnl = (r, k) => r[6 + k] * r[5];
+  function stats(rs, k) {
+    const p = rs.map(r => pnl(r, k)), win = p.filter(v => v > 0), loss = p.filter(v => v <= 0);
+    const byDay = {}; rs.forEach((r, i) => byDay[r[0]] = (byDay[r[0]] || 0) + p[i]);
+    const dv = Object.values(byDay), lsum = -loss.reduce((a, b) => a + b, 0);
+    return { n: p.length, won: p.length ? win.length / p.length : 0, total: p.reduce((a, b) => a + b, 0),
+      avg: p.length ? p.reduce((a, b) => a + b, 0) / p.length : 0, pf: lsum ? win.reduce((a, b) => a + b, 0) / lsum : null,
+      daysUp: dv.length ? dv.filter(v => v > 0).length / dv.length : 0, days: dv.length };
+  }
+  function windowStart(all, days) {
+    if (period === "all") return days[0];
+    if (period === "5d") return days[Math.max(0, days.length - 5)];
+    return addDays(D.to, -(+period) + 1);
+  }
+
+  function draw() {
+    if (!D) return;
+    const base = set === "trend" ? rows.filter(r => r[3] === 1) : rows;
+    const days = [...new Set(base.map(r => r[0]))].sort();
+    const from = windowStart(base, days);
+    const cur = base.filter(r => r[0] >= from), before = base.filter(r => r[0] < from);
+    const S = D.exits.map((_, k) => stats(cur, k)), B = D.exits.map((_, k) => stats(before, k));
+    const bestK = S.reduce((b, s, k) => s.total > S[b].total ? k : b, 0);
+    $("lyMeta").textContent = `${day(from)} – ${day(D.to)} · ${cur.length.toLocaleString()} trades on ${S[0].days} days`;
+    const showB = period !== "all" && before.length;
+    $("lyTable").innerHTML = `<table><thead><tr><th>Way out</th><th class="r">Trades</th><th class="r">Won</th><th class="r">Total</th><th class="r">Avg / trade</th><th class="r hide-sm">Profit factor</th><th class="r hide-sm">Days up</th>${showB ? '<th class="r" title="Average per trade over every day before this period">Avg before</th>' : ""}</tr></thead><tbody>${
+      D.exits.map((name, k) => { const s = S[k]; return `<tr><td class="${k === bestK ? "best" : ""}"><span class="sw" style="background:${COL[k]}"></span>${esc(name)}</td>
+        <td class="r">${s.n.toLocaleString()}</td><td class="r">${Math.round(s.won * 100)}%</td><td class="r ${k === bestK ? "best" : ""}">${money(s.total)}</td>
+        <td class="r">${money(s.avg)}</td><td class="r hide-sm">${s.pf == null ? "—" : s.pf.toFixed(2)}</td><td class="r hide-sm">${Math.round(s.daysUp * 100)}%</td>
+        ${showB ? `<td class="r">${money(B[k].avg)}</td>` : ""}</tr>`; }).join("")}</tbody></table>`;
+
+    // series per day
+    const per = {}; base.forEach(r => { (per[r[0]] ||= []).push(r); });
+    let xs, ys;
+    if (mode === "total") {
+      xs = days.filter(d => d >= from);
+      ys = D.exits.map((_, k) => { let c = 0; return xs.map(d => c += per[d].reduce((a, r) => a + pnl(r, k), 0)); });
+    } else {
+      const N = 20; xs = days.filter(d => d >= from);
+      ys = D.exits.map((_, k) => xs.map(d => { const i = days.indexOf(d), w = days.slice(Math.max(0, i - N + 1), i + 1).flatMap(x => per[x]);
+        return w.reduce((a, r) => a + pnl(r, k), 0) / w.length; }));
+    }
+    $("lyChartTitle").textContent = mode === "total" ? "Running total, $" : "Average per trade over the last 20 trading days, $";
+    $("lyLegend").innerHTML = D.exits.map((n, k) => `<span><i style="background:${COL[k]}"></i>${esc(n)}</span>`).join("");
+    $("lyNote").textContent = mode === "total" ? "Each line adds up every trade's result from the start of the period. Hover for the values on a day."
+      : "Above zero = that way out has been making money lately. A line crossing zero is a trend changing.";
+    chart(xs, ys);
+
+    // trend: the same rule over recent stretches vs the whole test
+    const spans = [["Last 30 days", 30], ["Last 3 months", 91], ["Last 6 months", 182], ["6–12 months ago", -1], ["All 2 years", 0]];
+    const pick = ([, n]) => n === 0 ? base : n === -1 ? base.filter(r => r[0] >= addDays(D.to, -364) && r[0] < addDays(D.to, -181)) : base.filter(r => r[0] >= addDays(D.to, -n + 1));
+    const sub = spans.map(pick);
+    $("lyTrend").innerHTML = `<table><thead><tr><th>Avg per trade, by stretch</th>${spans.map(s => `<th class="r">${s[0]}</th>`).join("")}</tr></thead><tbody>${
+      D.exits.map((name, k) => `<tr><td><span class="sw" style="background:${COL[k]}"></span>${esc(name)}</td>${sub.map(rs => `<td class="r">${rs.length ? money(stats(rs, k).avg) : "—"}</td>`).join("")}</tr>`).join("")
+      }<tr><td class="muted">Trades</td>${sub.map(rs => `<td class="r muted">${rs.length.toLocaleString()}</td>`).join("")}</tr></tbody></table>`;
+  }
+
+  function chart(xs, ys) {
+    const plot = $("lyPlot"), tip = $("lyTip");
+    plot.querySelector("svg")?.remove();
+    if (xs.length < 2) { plot.insertAdjacentHTML("afterbegin", `<p class="note">Not enough trading days in this period to draw a line.</p>`); return; }
+    plot.querySelector("p.note")?.remove();
+    const W = 900, H = 300, L = 56, R = 12, T = 10, Bm = 26;
+    const all = ys.flat().concat(0), lo = Math.min(...all), hi = Math.max(...all);
+    const step = niceStep((hi - lo) / 5), y0 = Math.floor(lo / step) * step, y1 = Math.ceil(hi / step) * step;
+    const X = i => L + (W - L - R) * (i / (xs.length - 1)), Y = v => T + (H - T - Bm) * (1 - (v - y0) / (y1 - y0 || 1));
+    let g = "";
+    for (let v = y0; v <= y1 + 1e-9; v += step) g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)" stroke-width="1"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${usd(v).replace("+", "")}</text>`;
+    const ticks = Math.min(6, xs.length);
+    for (let j = 0; j < ticks; j++) { const i = Math.round(j * (xs.length - 1) / (ticks - 1 || 1));
+      g += `<text x="${X(i)}" y="${H - 6}" text-anchor="${j === 0 ? "start" : j === ticks - 1 ? "end" : "middle"}">${new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: xs.length < 70 ? "numeric" : undefined, year: xs.length >= 70 ? "2-digit" : undefined }).format(new Date(xs[i] + "T12:00:00Z"))}</text>`; }
+    const zero = `<line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--axis)" stroke-width="1"/>`;
+    const lines = ys.map((s, k) => `<path d="${s.map((v, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1)).join("")}" fill="none" stroke="${COL[k]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`).join("");
+    plot.insertAdjacentHTML("afterbegin", `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc($("lyChartTitle").textContent)}">${g}${zero}${lines}
+      <line id="lyCross" y1="${T}" y2="${H - Bm}" stroke="var(--axis)" stroke-width="1" visibility="hidden"/>
+      <g id="lyDots"></g><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - Bm}" fill="transparent" id="lyHit"/></svg>`);
+    const svg = plot.querySelector("svg"), cross = svg.querySelector("#lyCross"), dots = svg.querySelector("#lyDots");
+    const move = e => {
+      const pt = svg.getBoundingClientRect(), x = (e.clientX - pt.left) / pt.width * W;
+      const i = Math.max(0, Math.min(xs.length - 1, Math.round((x - L) / (W - L - R) * (xs.length - 1))));
+      cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("visibility", "visible");
+      dots.innerHTML = ys.map((s, k) => `<circle cx="${X(i)}" cy="${Y(s[i])}" r="4" fill="${COL[k]}" stroke="var(--surface-1)" stroke-width="2"/>`).join("");
+      tip.hidden = false;
+      tip.innerHTML = `<b>${day(xs[i])}</b>` + D.exits.map((n, k) => `<div><span><i style="background:${COL[k]}"></i>${esc(n)}</span><b>${usd(ys[k][i])}</b></div>`).join("");
+      const px = X(i) / W * pt.width, tw = tip.offsetWidth;
+      tip.style.left = (px + 14 + tw > pt.width ? px - 14 - tw : px + 14) + "px";
+    };
+    svg.querySelector("#lyHit").addEventListener("pointermove", move);
+    svg.querySelector("#lyHit").addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); dots.innerHTML = ""; });
+  }
+  function niceStep(r) { const p = 10 ** Math.floor(Math.log10(r || 1)), m = r / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+
+  const get = f => fetch(f + "?t=" + Date.now(), { cache: "no-store" }).then(r => r.ok ? r.json() : null).catch(() => null);
+  Promise.all([get("cci_2y.json"), get("no_trade.json")]).then(([d, nt]) => {
+    if (!d) { $("lyTable").innerHTML = '<p class="note">The 2-year results aren\'t available yet.</p>'; return; }
+    const skip = new Set((nt && nt.tickers) || []);
+    D = d; rows = d.rows.filter(r => !skip.has(r[1]));
+    draw();
+  });
+})();
 </script>
 </body>
 </html>

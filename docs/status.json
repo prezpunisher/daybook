@@ -1,6 +1,153 @@
 {
  "runs": [
   {
+   "time": "2026-11-23T09:45:00-05:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/45192662054",
+   "kind": "watchlist",
+   "universe": 2053,
+   "downloaded": 2053,
+   "session": "2026-11-23",
+   "vix": 26.8,
+   "vix_text": "VIX 26.8 (elevated, options pricier)",
+   "aligned": 1188,
+   "skipped_earnings": [],
+   "skipped_pricey": [
+    "MU",
+    "AMD",
+    "LITE",
+    "GEV"
+   ],
+   "skipped_thin": [
+    "NVDA (371/day)",
+    "META (407/day)",
+    "MSFT (49/day)",
+    "SNDK (233/day)",
+    "TSM (149/day)",
+    "ORCL (163/day)",
+    "MRVL (42/day)",
+    "BE (250/day)",
+    "AMAT (29/day)"
+   ],
+   "picks": [
+    {
+     "ticker": "SPY",
+     "direction": "PUTS",
+     "price": 717.95,
+     "stop": 752.17,
+     "day_chg": 4.08,
+     "contract": "Nov 27 $718P (4 DTE) 7.32/7.51 at 8:48 CT, OI 461, IV 22%",
+     "target": "+3% target: option ~$7.64 \u2248 stock $717.56",
+     "symbol": "SPY261127P00718000",
+     "qty": 1,
+     "opt_avg_vol": 544,
+     "size": "max 1 contract ($751)",
+     "mid": 7.42
+    },
+    {
+     "ticker": "QQQ",
+     "direction": "PUTS",
+     "price": 645.3,
+     "stop": 690.69,
+     "day_chg": 6.06,
+     "contract": "Nov 27 $645P (4 DTE) 7.00/9.41 at 8:48 CT, OI 2,566, IV 30% \u26a0\ufe0f wide spread",
+     "target": "+3% target: option ~$8.45 \u2248 stock $644.82",
+     "symbol": "QQQ261127P00645000",
+     "qty": 1,
+     "opt_avg_vol": 1337,
+     "size": "max 1 contract ($941)",
+     "mid": 8.21
+    },
+    {
+     "ticker": "IWM",
+     "direction": "PUTS",
+     "price": 263.55,
+     "stop": 279.6,
+     "day_chg": 2.7,
+     "contract": "Nov 27 $264P (4 DTE) 2.62/2.81 at 8:48 CT, OI 2,414, IV 24%",
+     "target": "+3% target: option ~$2.80 \u2248 stock $263.39",
+     "symbol": "IWM261127P00264000",
+     "qty": 3,
+     "opt_avg_vol": 724,
+     "size": "max 3 contracts ($843)",
+     "mid": 2.71
+    },
+    {
+     "ticker": "GOOGL",
+     "direction": "PUTS",
+     "price": 277.4,
+     "stop": 310.58,
+     "day_chg": 4.56,
+     "contract": "Nov 27 $277.5P (4 DTE) 3.45/4.10 at 8:48 CT, OI 1,838, IV 31% \u26a0\ufe0f wide spread",
+     "target": "+3% target: option ~$3.89 \u2248 stock $277.18",
+     "symbol": "GOOGL261127P00277500",
+     "qty": 2,
+     "opt_avg_vol": 1131,
+     "size": "max 2 contracts ($820)",
+     "mid": 3.77
+    },
+    {
+     "ticker": "GOOG",
+     "direction": "PUTS",
+     "price": 275.01,
+     "stop": 307.31,
+     "day_chg": 4.17,
+     "contract": "Nov 27 $275P (4 DTE) 3.45/3.75 at 8:48 CT, OI 2,039, IV 30%",
+     "target": "+3% target: option ~$3.71 \u2248 stock $274.81",
+     "symbol": "GOOG261127P00275000",
+     "qty": 2,
+     "opt_avg_vol": 588,
+     "size": "max 2 contracts ($750)",
+     "mid": 3.6
+    },
+    {
+     "ticker": "PLTR",
+     "direction": "PUTS",
+     "price": 156.22,
+     "stop": 175.65,
+     "day_chg": 8.87,
+     "contract": "Nov 27 $155P (4 DTE) 3.00/3.55 at 8:48 CT, OI 1,890, IV 51% \u26a0\ufe0f wide spread",
+     "target": "+3% target: option ~$3.37 \u2248 stock $156.03",
+     "symbol": "PLTR261127P00155000",
+     "qty": 2,
+     "opt_avg_vol": 1100,
+     "size": "max 2 contracts ($710)",
+     "mid": 3.27
+    },
+    {
+     "ticker": "NBIS",
+     "direction": "PUTS",
+     "price": 100.5,
+     "stop": 137.43,
+     "day_chg": 23.59,
+     "contract": "Nov 27 $100P (4 DTE) 4.00/4.05 at 8:48 CT, OI 1,239, IV 90%",
+     "target": "+3% target: option ~$4.15 \u2248 stock $100.27",
+     "symbol": "NBIS261127P00100000",
+     "qty": 2,
+     "opt_avg_vol": 1113,
+     "size": "max 2 contracts ($810)",
+     "mid": 4.03
+    },
+    {
+     "ticker": "NFLX",
+     "direction": "PUTS",
+     "price": 57.39,
+     "stop": 63.96,
+     "day_chg": 1.16,
+     "contract": "Nov 27 $57P (4 DTE) 0.46/0.55 at 8:48 CT, OI 4,024, IV 28% \u26a0\ufe0f wide spread",
+     "target": "+3% target: option ~$0.52 \u2248 stock $57.35",
+     "symbol": "NFLX261127P00057000",
+     "qty": 18,
+     "opt_avg_vol": 1412,
+     "size": "max 18 contracts ($990)",
+     "mid": 0.51
+    }
+   ],
+   "notified": true,
+   "result": "watchlist sent",
+   "seconds": 200
+  },
+  {
    "time": "2026-11-23T09:15:00-05:00",
    "trigger": "keeper",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/45173808091",
@@ -8720,7 +8867,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-11-23T09:15:00-05:00",
+ "last_checked": "2026-11-23T09:45:00-05:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,

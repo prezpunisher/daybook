@@ -41,6 +41,510 @@
  },
  "watchlist_check": [
   {
+   "date": "2026-11-25",
+   "ticker": "UNH",
+   "dir": "P",
+   "option": "335P",
+   "won": false,
+   "result": -0.2,
+   "pnl": -153,
+   "best": 0.0,
+   "min20": 5,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 1.65,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -269.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 765,
+    "3": {
+     "ret": -0.2,
+     "pnl": -153
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -153
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -153
+    },
+    "best": {
+     "ret": 0.0,
+     "pnl": 0
+    }
+   },
+   "symbol": "UNH261127P00335000",
+   "exits15": {
+    "cost": 765,
+    "3": {
+     "ret": -0.15,
+     "pnl": -115
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -115
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -115
+    },
+    "best": {
+     "ret": 0.0,
+     "pnl": 0
+    }
+   }
+  },
+  {
+   "date": "2026-11-25",
+   "ticker": "SPY",
+   "dir": "P",
+   "option": "696P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 18,
+   "best": 0.08,
+   "min20": 6,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 2.85,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -507.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 602,
+    "3": {
+     "ret": 0.03,
+     "pnl": 18
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 30
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -120
+    },
+    "best": {
+     "ret": 0.08,
+     "pnl": 48
+    }
+   },
+   "symbol": "SPY261127P00696000",
+   "exits15": {
+    "cost": 602,
+    "3": {
+     "ret": 0.03,
+     "pnl": 18
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 30
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -90
+    },
+    "best": {
+     "ret": 0.08,
+     "pnl": 48
+    }
+   }
+  },
+  {
+   "date": "2026-11-25",
+   "ticker": "QQQ",
+   "dir": "P",
+   "option": "608P",
+   "won": false,
+   "result": -0.2,
+   "pnl": -151,
+   "best": 0.016,
+   "min20": 4,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 4.67,
+   "macd_ok": true,
+   "fresh_cross": true,
+   "cross_against_1h": true,
+   "cci": -510.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "08:30",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 753,
+    "3": {
+     "ret": -0.2,
+     "pnl": -151
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -151
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -151
+    },
+    "best": {
+     "ret": 0.016,
+     "pnl": 12
+    }
+   },
+   "symbol": "QQQ261127P00608000",
+   "exits15": {
+    "cost": 753,
+    "3": {
+     "ret": -0.15,
+     "pnl": -113
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -113
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -113
+    },
+    "best": {
+     "ret": 0.016,
+     "pnl": 12
+    }
+   }
+  },
+  {
+   "date": "2026-11-25",
+   "ticker": "PLTR",
+   "dir": "P",
+   "option": "152.5P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 30,
+   "best": 0.175,
+   "min20": 6,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 4.26,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -461.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 996,
+    "3": {
+     "ret": 0.03,
+     "pnl": 30
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 50
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 100
+    },
+    "best": {
+     "ret": 0.175,
+     "pnl": 174
+    }
+   },
+   "symbol": "PLTR261127P00152500",
+   "exits15": {
+    "cost": 996,
+    "3": {
+     "ret": 0.03,
+     "pnl": 30
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 50
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 100
+    },
+    "best": {
+     "ret": 0.175,
+     "pnl": 174
+    }
+   }
+  },
+  {
+   "date": "2026-11-25",
+   "ticker": "ORCL",
+   "dir": "P",
+   "option": "100P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 23,
+   "best": 0.072,
+   "min20": 6,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 9.11,
+   "macd_ok": true,
+   "fresh_cross": true,
+   "cross_against_1h": true,
+   "cci": -602.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "08:30",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 753,
+    "3": {
+     "ret": 0.03,
+     "pnl": 23
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 38
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -151
+    },
+    "best": {
+     "ret": 0.072,
+     "pnl": 54
+    }
+   },
+   "symbol": "ORCL261127P00100000",
+   "exits15": {
+    "cost": 753,
+    "3": {
+     "ret": 0.03,
+     "pnl": 23
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 38
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -113
+    },
+    "best": {
+     "ret": 0.072,
+     "pnl": 54
+    }
+   }
+  },
+  {
+   "date": "2026-11-25",
+   "ticker": "NVDA",
+   "dir": "P",
+   "option": "141P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 29,
+   "best": 0.123,
+   "min20": 7,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 7.9,
+   "macd_ok": true,
+   "fresh_cross": true,
+   "cross_against_1h": false,
+   "cci": -497.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "08:30",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 975,
+    "3": {
+     "ret": 0.03,
+     "pnl": 29
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 49
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -195
+    },
+    "best": {
+     "ret": 0.123,
+     "pnl": 120
+    }
+   },
+   "symbol": "NVDA261127P00141000",
+   "exits15": {
+    "cost": 975,
+    "3": {
+     "ret": 0.03,
+     "pnl": 29
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 49
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -146
+    },
+    "best": {
+     "ret": 0.123,
+     "pnl": 120
+    }
+   }
+  },
+  {
+   "date": "2026-11-25",
+   "ticker": "NFLX",
+   "dir": "P",
+   "option": "57P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 30,
+   "best": 0.404,
+   "min20": 10,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 2.36,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -455.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 987,
+    "3": {
+     "ret": 0.03,
+     "pnl": 30
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 49
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 99
+    },
+    "best": {
+     "ret": 0.404,
+     "pnl": 399
+    }
+   },
+   "symbol": "NFLX261127P00057000",
+   "exits15": {
+    "cost": 987,
+    "3": {
+     "ret": 0.03,
+     "pnl": 30
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 49
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 99
+    },
+    "best": {
+     "ret": 0.404,
+     "pnl": 399
+    }
+   }
+  },
+  {
+   "date": "2026-11-25",
+   "ticker": "IWM",
+   "dir": "P",
+   "option": "261P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 25,
+   "best": 0.097,
+   "min20": 8,
+   "alert": "8:48",
+   "ema_ok": true,
+   "ema_dist_%": 1.76,
+   "macd_ok": true,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": -368.0,
+   "cci_ok": true,
+   "cci_strong": true,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 828,
+    "3": {
+     "ret": 0.03,
+     "pnl": 25
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 41
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -166
+    },
+    "best": {
+     "ret": 0.097,
+     "pnl": 80
+    }
+   },
+   "symbol": "IWM261127P00261000",
+   "exits15": {
+    "cost": 828,
+    "3": {
+     "ret": 0.03,
+     "pnl": 25
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 41
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -124
+    },
+    "best": {
+     "ret": 0.097,
+     "pnl": 80
+    }
+   }
+  },
+  {
    "date": "2026-11-24",
    "ticker": "XOM",
    "dir": "P",
@@ -7961,7 +8465,7 @@
    "exits15": null
   }
  ],
- "updated": "2026-11-25T15:06-06:00",
+ "updated": "2026-11-25T15:16-06:00",
  "shadow": [
   {
    "ticker": "NFLX",

@@ -41,6 +41,321 @@
  },
  "watchlist_check": [
   {
+   "date": "2026-11-27",
+   "ticker": "WMT",
+   "dir": "C",
+   "option": "132C",
+   "won": true,
+   "result": 0.03,
+   "pnl": 29,
+   "best": 0.234,
+   "min20": null,
+   "alert": "8:49",
+   "ema_ok": true,
+   "ema_dist_%": 0.45,
+   "macd_ok": true,
+   "fresh_cross": true,
+   "cross_against_1h": false,
+   "cci": 56.0,
+   "cci_ok": true,
+   "cci_strong": false,
+   "all3_ok": true,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 960,
+    "3": {
+     "ret": 0.03,
+     "pnl": 29
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 48
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 96
+    },
+    "best": {
+     "ret": 0.234,
+     "pnl": 225
+    }
+   },
+   "symbol": "WMT261204C00132000",
+   "exits15": {
+    "cost": 960,
+    "3": {
+     "ret": 0.03,
+     "pnl": 29
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 48
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 96
+    },
+    "best": {
+     "ret": 0.234,
+     "pnl": 225
+    }
+   }
+  },
+  {
+   "date": "2026-11-27",
+   "ticker": "ORCL",
+   "dir": "P",
+   "option": "105P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 27,
+   "best": 0.114,
+   "min20": 93,
+   "alert": "8:49",
+   "ema_ok": true,
+   "ema_dist_%": 0.3,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": 125.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 898,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 45
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 90
+    },
+    "best": {
+     "ret": 0.114,
+     "pnl": 102
+    }
+   },
+   "symbol": "ORCL261204P00105000",
+   "exits15": {
+    "cost": 898,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 45
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 90
+    },
+    "best": {
+     "ret": 0.114,
+     "pnl": 102
+    }
+   }
+  },
+  {
+   "date": "2026-11-27",
+   "ticker": "NVDA",
+   "dir": "P",
+   "option": "148P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 25,
+   "best": 0.071,
+   "min20": 105,
+   "alert": "8:49",
+   "ema_ok": true,
+   "ema_dist_%": 0.9,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": 80.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "",
+   "exits": {
+    "cost": 840,
+    "3": {
+     "ret": 0.03,
+     "pnl": 25
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 42
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -168
+    },
+    "best": {
+     "ret": 0.071,
+     "pnl": 60
+    }
+   },
+   "symbol": "NVDA261204P00148000",
+   "exits15": {
+    "cost": 840,
+    "3": {
+     "ret": 0.03,
+     "pnl": 25
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 42
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -126
+    },
+    "best": {
+     "ret": 0.071,
+     "pnl": 60
+    }
+   }
+  },
+  {
+   "date": "2026-11-27",
+   "ticker": "MSTR",
+   "dir": "P",
+   "option": "81P",
+   "won": false,
+   "result": -0.2,
+   "pnl": -120,
+   "best": 0.012,
+   "min20": 40,
+   "alert": "8:49",
+   "ema_ok": false,
+   "ema_dist_%": -3.26,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": 110.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "",
+   "turned_against": "09:00",
+   "exits": {
+    "cost": 600,
+    "3": {
+     "ret": -0.2,
+     "pnl": -120
+    },
+    "5": {
+     "ret": -0.2,
+     "pnl": -120
+    },
+    "10": {
+     "ret": -0.2,
+     "pnl": -120
+    },
+    "best": {
+     "ret": 0.012,
+     "pnl": 7
+    }
+   },
+   "symbol": "MSTR261204P00081000",
+   "exits15": {
+    "cost": 600,
+    "3": {
+     "ret": -0.15,
+     "pnl": -90
+    },
+    "5": {
+     "ret": -0.15,
+     "pnl": -90
+    },
+    "10": {
+     "ret": -0.15,
+     "pnl": -90
+    },
+    "best": {
+     "ret": 0.012,
+     "pnl": 7
+    }
+   }
+  },
+  {
+   "date": "2026-11-27",
+   "ticker": "IBIT",
+   "dir": "P",
+   "option": "34P",
+   "won": true,
+   "result": 0.03,
+   "pnl": 30,
+   "best": 0.152,
+   "min20": 46,
+   "alert": "8:49",
+   "ema_ok": false,
+   "ema_dist_%": -0.76,
+   "macd_ok": false,
+   "fresh_cross": false,
+   "cross_against_1h": false,
+   "cci": 129.0,
+   "cci_ok": false,
+   "cci_strong": false,
+   "all3_ok": false,
+   "signal_before_push": "",
+   "signal_after_push": "09:00",
+   "turned_against": "",
+   "exits": {
+    "cost": 1000,
+    "3": {
+     "ret": 0.03,
+     "pnl": 30
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 50
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 100
+    },
+    "best": {
+     "ret": 0.152,
+     "pnl": 152
+    }
+   },
+   "symbol": "IBIT261204P00034000",
+   "exits15": {
+    "cost": 1000,
+    "3": {
+     "ret": 0.03,
+     "pnl": 30
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 50
+    },
+    "10": {
+     "ret": 0.1,
+     "pnl": 100
+    },
+    "best": {
+     "ret": 0.152,
+     "pnl": 152
+    }
+   }
+  },
+  {
    "date": "2026-11-25",
    "ticker": "UNH",
    "dir": "P",
@@ -8465,8 +8780,148 @@
    "exits15": null
   }
  ],
- "updated": "2026-11-27T14:42-06:00",
+ "updated": "2026-11-27T15:15-06:00",
  "shadow": [
+  {
+   "ticker": "MSFT",
+   "direction": "CALLS",
+   "time": "11:30",
+   "close": 491.66,
+   "ema": 490.6,
+   "macd": 0.544,
+   "macd_signal": 0.518,
+   "cci": 13.0,
+   "cci_strong": false,
+   "date": "2026-11-27",
+   "symbol": "MSFT261204C00492500",
+   "day_option_volume": 537,
+   "thin": false,
+   "daily_trend_agrees": false,
+   "label": "492.5C",
+   "entry": 9.1,
+   "entry_time": "11:33",
+   "qty": 1,
+   "hit3": "11:54",
+   "hit5": null,
+   "hit10": null,
+   "hit20": null,
+   "min3": 21,
+   "min5": null,
+   "min10": null,
+   "min20": null,
+   "best": 0.049,
+   "now": 0.04,
+   "result": 0.03,
+   "pnl": 27,
+   "exits": {
+    "cost": 910,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.04,
+     "pnl": 36
+    },
+    "10": {
+     "ret": 0.04,
+     "pnl": 36
+    },
+    "best": {
+     "ret": 0.049,
+     "pnl": 45
+    }
+   },
+   "exits15": {
+    "cost": 910,
+    "3": {
+     "ret": 0.03,
+     "pnl": 27
+    },
+    "5": {
+     "ret": 0.04,
+     "pnl": 36
+    },
+    "10": {
+     "ret": 0.04,
+     "pnl": 36
+    },
+    "best": {
+     "ret": 0.049,
+     "pnl": 45
+    }
+   }
+  },
+  {
+   "ticker": "MSFT",
+   "direction": "CALLS",
+   "time": "11:00",
+   "close": 491.11,
+   "ema": 490.55,
+   "macd": 0.519,
+   "macd_signal": 0.515,
+   "cci": 8.0,
+   "cci_strong": false,
+   "date": "2026-11-27",
+   "symbol": "MSFT261204C00490000",
+   "day_option_volume": 485,
+   "thin": true,
+   "daily_trend_agrees": false,
+   "label": "490C",
+   "entry": 10.28,
+   "entry_time": "11:03",
+   "qty": 1,
+   "hit3": "11:29",
+   "hit5": "11:57",
+   "hit10": null,
+   "hit20": null,
+   "min3": 26,
+   "min5": 54,
+   "min10": null,
+   "min20": null,
+   "best": 0.07,
+   "now": 0.07,
+   "result": 0.03,
+   "pnl": 31,
+   "exits": {
+    "cost": 1028,
+    "3": {
+     "ret": 0.03,
+     "pnl": 31
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 51
+    },
+    "10": {
+     "ret": 0.07,
+     "pnl": 72
+    },
+    "best": {
+     "ret": 0.07,
+     "pnl": 72
+    }
+   },
+   "exits15": {
+    "cost": 1028,
+    "3": {
+     "ret": 0.03,
+     "pnl": 31
+    },
+    "5": {
+     "ret": 0.05,
+     "pnl": 51
+    },
+    "10": {
+     "ret": 0.07,
+     "pnl": 72
+    },
+    "best": {
+     "ret": 0.07,
+     "pnl": 72
+    }
+   }
+  },
   {
    "ticker": "NFLX",
    "direction": "CALLS",
@@ -26722,7 +27177,8 @@
   "2026-11-20",
   "2026-11-23",
   "2026-11-24",
-  "2026-11-25"
+  "2026-11-25",
+  "2026-11-27"
  ],
  "backtest": {
   "ran": "2026-11-23T15:16-06:00",

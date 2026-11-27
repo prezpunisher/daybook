@@ -1,6 +1,106 @@
 {
  "runs": [
   {
+   "time": "2026-11-27T09:15:00-05:00",
+   "trigger": "keeper",
+   "run_url": "https://github.com/prezpunisher/daybook/actions/runs/46003613676",
+   "kind": "premarket",
+   "universe": 2029,
+   "downloaded": 2029,
+   "aligned": 1070,
+   "market": "S&P fut +1.9% \u00b7 Nasdaq fut +2.7% \u00b7 VIX 25.5 (elevated, options pricier)",
+   "skipped_earnings": [],
+   "skipped_pricey": [
+    "SPY",
+    "QQQ",
+    "NVDA",
+    "MU",
+    "AMD",
+    "MSFT",
+    "META",
+    "AVGO",
+    "TSM",
+    "LITE",
+    "GEV",
+    "BE",
+    "AMAT",
+    "LRCX",
+    "PANW",
+    "TXN",
+    "ASML",
+    "UNH"
+   ],
+   "picks": [
+    {
+     "ticker": "IWM",
+     "direction": "PUTS",
+     "price": 268.87,
+     "stop": 279.6,
+     "premarket": 270.31,
+     "day_chg": 0.54
+    },
+    {
+     "ticker": "SNDK",
+     "direction": "PUTS",
+     "price": 94.39,
+     "stop": 133.89,
+     "premarket": 76.68,
+     "day_chg": -18.77
+    },
+    {
+     "ticker": "ORCL",
+     "direction": "PUTS",
+     "price": 103.88,
+     "stop": 128.55,
+     "premarket": 105.84,
+     "day_chg": 1.89
+    },
+    {
+     "ticker": "WMT",
+     "direction": "CALLS",
+     "price": 131.94,
+     "stop": 123.24,
+     "premarket": 131.89,
+     "day_chg": -0.04
+    },
+    {
+     "ticker": "NBIS",
+     "direction": "PUTS",
+     "price": 84.99,
+     "stop": 131.99,
+     "premarket": 88.24,
+     "day_chg": 3.82
+    },
+    {
+     "ticker": "NFLX",
+     "direction": "PUTS",
+     "price": 59.41,
+     "stop": 63.87,
+     "premarket": 59.25,
+     "day_chg": -0.27
+    },
+    {
+     "ticker": "CRWD",
+     "direction": "PUTS",
+     "price": 209.3,
+     "stop": 250.62,
+     "premarket": 209.01,
+     "day_chg": -0.14
+    },
+    {
+     "ticker": "JPM",
+     "direction": "PUTS",
+     "price": 316.74,
+     "stop": 339.37,
+     "premarket": 318.44,
+     "day_chg": 0.54
+    }
+   ],
+   "notified": true,
+   "result": "premarket sent",
+   "seconds": 221
+  },
+  {
    "time": "2026-11-26T16:15:01-05:00",
    "trigger": "keeper",
    "run_url": "https://github.com/prezpunisher/daybook/actions/runs/45891471567",
@@ -10352,7 +10452,7 @@
    "seconds": 489
   }
  ],
- "last_checked": "2026-11-26T16:15:01-05:00",
+ "last_checked": "2026-11-27T09:15:00-05:00",
  "settings": {
   "take_profit": 0.03,
   "stop_loss": 0.2,
